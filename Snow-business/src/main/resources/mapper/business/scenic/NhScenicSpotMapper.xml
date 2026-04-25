@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.scenic.mapper.NhScenicSpotMapper">
+
+    <resultMap type="com.snow.business.scenic.domain.NhScenicSpot" id="NhScenicSpotResult">
+        <id     property="id"          column="id"           />
+        <result property="spotName"    column="spot_name"    />
+        <result property="city"        column="city"         />
+        <result property="spotContent" column="spot_content" />
+        <result property="imagesJson"  column="images_json"  />
+    </resultMap>
+
+    <sql id="selectNhScenicSpotVo">
+        select id, spot_name, city, spot_content, images_json
+          from nh_scenic_spot
+    </sql>
+
+    <select id="selectNhScenicSpotById" parameterType="Long" resultMap="NhScenicSpotResult">
+        <include refid="selectNhScenicSpotVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectNhScenicSpotList" parameterType="com.snow.business.scenic.domain.NhScenicSpot" resultMap="NhScenicSpotResult">
+        <include refid="selectNhScenicSpotVo"/>
+        <where>
+            <if test="spotName != null and spotName != ''">
+                and spot_name like concat('%', #{spotName}, '%')
+            </if>
+            <if test="city != null and city != ''">
+                and city = #{city}
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insertNhScenicSpot" parameterType="com.snow.business.scenic.domain.NhScenicSpot" useGeneratedKeys="true" keyProperty="id">
+        insert into nh_scenic_spot
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="spotName != null and spotName != ''">spot_name,</if>
+            <if test="city != null">city,</if>
+            <if test="spotContent != null">spot_content,</if>
+            <if test="imagesJson != null">images_json,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="spotName != null and spotName != ''">#{spotName},</if>
+            <if test="city != null">#{city},</if>
+            <if test="spotContent != null">#{spotContent},</if>
+            <if test="imagesJson != null">#{imagesJson},</if>
+        </trim>
+    </insert>
+
+    <update id="updateNhScenicSpot" parameterType="com.snow.business.scenic.domain.NhScenicSpot">
+        update nh_scenic_spot
+        <set>
+            <if test="spotName != null and spotName != ''">spot_name = #{spotName},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="spotContent != null">spot_content = #{spotContent},</if>
+            <if test="imagesJson != null">images_json = #{imagesJson},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteNhScenicSpotById" parameterType="Long">
+        delete from nh_scenic_spot where id = #{id}
+    </delete>
+
+    <delete id="deleteNhScenicSpotByIds" parameterType="Long">
+        delete from nh_scenic_spot where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
