@@ -161,6 +161,20 @@ export const dynamicRoutes = [
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
       }
     ]
+  },
+  {
+    path: '/business/tour-group-detail',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:tourGroup:query'],
+    children: [
+      {
+        path: 'index/:id(\\d+)',
+        component: () => import('@/views/business/tourGroup/detail'),
+        name: 'TourGroupDetail',
+        meta: { title: '旅游团详情', activeMenu: '/travel/tourGroup' }
+      }
+    ]
   }
 ]
 

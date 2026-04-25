@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.cultural.mapper.CulturalCreativeCommentMapper">
+
+    <resultMap type="com.snow.business.cultural.domain.CulturalCreativeComment" id="CulturalCreativeCommentResult">
+        <id     property="id"           column="id"            />
+        <result property="productId"    column="product_id"    />
+        <result property="userId"       column="user_id"       />
+        <result property="userNickname" column="user_nickname" />
+        <result property="userAvatar"   column="user_avatar"   />
+        <result property="isAnonymous"  column="is_anonymous"  />
+        <result property="score"        column="score"         />
+        <result property="content"      column="content"       />
+        <result property="imagesJson"   column="images_json"   />
+        <result property="likeCount"    column="like_count"    />
+        <result property="status"       column="status"        />
+        <result property="auditStatus"  column="audit_status"  />
+        <result property="createTime"   column="create_time"   />
+        <result property="updateTime"   column="update_time"   />
+    </resultMap>
+
+    <sql id="selectCulturalCreativeCommentVo">
+        select id, product_id, user_id, user_nickname, user_avatar, is_anonymous,
+               score, content, images_json, like_count, status, audit_status,
+               create_time, update_time
+          from cultural_creative_comments
+    </sql>
+
+    <select id="selectCulturalCreativeCommentList" parameterType="com.snow.business.cultural.domain.CulturalCreativeComment" resultMap="CulturalCreativeCommentResult">
+        <include refid="selectCulturalCreativeCommentVo"/>
+        <where>
+            <if test="productId != null">
+                and product_id = #{productId}
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                and audit_status = #{auditStatus}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+</mapper>

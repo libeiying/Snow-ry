@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.tour.mapper.TourGroupMapper">
+
+    <resultMap type="com.snow.business.tour.domain.TourGroup" id="TourGroupResult">
+        <id     property="id"              column="id"               />
+        <result property="groupCode"       column="group_code"       />
+        <result property="title"           column="title"            />
+        <result property="subTitle"        column="sub_title"        />
+        <result property="departureCity"   column="departure_city"   />
+        <result property="destinationCity" column="destination_city" />
+        <result property="days"            column="days"             />
+        <result property="nights"          column="nights"           />
+        <result property="minPrice"        column="min_price"        />
+        <result property="coverImage"      column="cover_image"      />
+        <result property="tags"            column="tags"             />
+        <result property="sortOrder"       column="sort_order"       />
+        <result property="status"          column="status"           />
+        <result property="createTime"      column="create_time"      />
+        <result property="updateTime"      column="update_time"      />
+    </resultMap>
+
+    <sql id="selectTourGroupVo">
+        select id, group_code, title, sub_title, departure_city, destination_city,
+               days, nights, min_price, cover_image, tags, sort_order, status,
+               create_time, update_time
+          from tour_groups
+    </sql>
+
+    <select id="selectTourGroupById" parameterType="Long" resultMap="TourGroupResult">
+        <include refid="selectTourGroupVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectTourGroupByGroupCode" parameterType="String" resultMap="TourGroupResult">
+        <include refid="selectTourGroupVo"/>
+        where group_code = #{groupCode}
+        limit 1
+    </select>
+
+    <select id="selectTourGroupList" parameterType="com.snow.business.tour.domain.TourGroup" resultMap="TourGroupResult">
+        <include refid="selectTourGroupVo"/>
+        <where>
+            <if test="groupCode != null and groupCode != ''">
+                and group_code = #{groupCode}
+            </if>
+            <if test="title != null and title != ''">
+                and title like concat('%', #{title}, '%')
+            </if>
+            <if test="departureCity != null and departureCity != ''">
+                and departure_city like concat('%', #{departureCity}, '%')
+            </if>
+            <if test="destinationCity != null and destinationCity != ''">
+                and destination_city like concat('%', #{destinationCity}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+        </where>
+        order by sort_order asc, update_time desc
+    </select>
+
+    <insert id="insertTourGroup" parameterType="com.snow.business.tour.domain.TourGroup" useGeneratedKeys="true" keyProperty="id">
+        insert into tour_groups (
+            group_code, title, sub_title, departure_city, destination_city,
+            days, nights, min_price, cover_image, tags, sort_order, status
+        ) values (
+            #{groupCode}, #{title}, #{subTitle}, #{departureCity}, #{destinationCity},
+            #{days}, #{nights}, #{minPrice}, #{coverImage}, #{tags}, #{sortOrder}, #{status}
+        )
+    </insert>
+
+    <update id="updateTourGroup" parameterType="com.snow.business.tour.domain.TourGroup">
+        update tour_groups
+        <set>
+            <if test="groupCode != null">group_code = #{groupCode},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="subTitle != null">sub_title = #{subTitle},</if>
+            <if test="departureCity != null">departure_city = #{departureCity},</if>
+            <if test="destinationCity != null">destination_city = #{destinationCity},</if>
+            <if test="days != null">days = #{days},</if>
+            <if test="nights != null">nights = #{nights},</if>
+            <if test="minPrice != null">min_price = #{minPrice},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="tags != null">tags = #{tags},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteTourGroupById" parameterType="Long">
+        delete from tour_groups where id = #{id}
+    </delete>
+
+    <delete id="deleteTourGroupByIds" parameterType="Long">
+        delete from tour_groups where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
+

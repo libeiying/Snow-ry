@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.tour.mapper.TourGroupDetailMapper">
+
+    <resultMap type="com.snow.business.tour.domain.TourGroupDetail" id="TourGroupDetailResult">
+        <id     property="id"            column="id"            />
+        <result property="groupId"       column="group_id"      />
+        <result property="highlights"    column="highlights"    />
+        <result property="itineraryText" column="itinerary_text"/>
+        <result property="costIncludes"  column="cost_includes" />
+        <result property="costExcludes"  column="cost_excludes" />
+        <result property="bookingNotes"  column="booking_notes" />
+        <result property="imagesJson"    column="images_json"   />
+        <result property="status"        column="status"        />
+        <result property="createTime"    column="create_time"   />
+        <result property="updateTime"    column="update_time"   />
+    </resultMap>
+
+    <sql id="selectTourGroupDetailVo">
+        select id, group_id, highlights, itinerary_text, cost_includes, cost_excludes,
+               booking_notes, images_json, status, create_time, update_time
+          from tour_group_details
+    </sql>
+
+    <select id="selectTourGroupDetailById" parameterType="Long" resultMap="TourGroupDetailResult">
+        <include refid="selectTourGroupDetailVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectTourGroupDetailByGroupId" parameterType="Long" resultMap="TourGroupDetailResult">
+        <include refid="selectTourGroupDetailVo"/>
+        where group_id = #{groupId}
+        limit 1
+    </select>
+
+    <select id="selectTourGroupDetailList" parameterType="com.snow.business.tour.domain.TourGroupDetail" resultMap="TourGroupDetailResult">
+        <include refid="selectTourGroupDetailVo"/>
+        <where>
+            <if test="groupId != null">and group_id = #{groupId}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+        order by update_time desc
+    </select>
+
+    <insert id="insertTourGroupDetail" parameterType="com.snow.business.tour.domain.TourGroupDetail" useGeneratedKeys="true" keyProperty="id">
+        insert into tour_group_details (
+            group_id, highlights, itinerary_text, cost_includes, cost_excludes,
+            booking_notes, images_json, status
+        ) values (
+            #{groupId}, #{highlights}, #{itineraryText}, #{costIncludes}, #{costExcludes},
+            #{bookingNotes}, #{imagesJson}, #{status}
+        )
+    </insert>
+
+    <update id="updateTourGroupDetail" parameterType="com.snow.business.tour.domain.TourGroupDetail">
+        update tour_group_details
+        <set>
+            <if test="highlights != null">highlights = #{highlights},</if>
+            <if test="itineraryText != null">itinerary_text = #{itineraryText},</if>
+            <if test="costIncludes != null">cost_includes = #{costIncludes},</if>
+            <if test="costExcludes != null">cost_excludes = #{costExcludes},</if>
+            <if test="bookingNotes != null">booking_notes = #{bookingNotes},</if>
+            <if test="imagesJson != null">images_json = #{imagesJson},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = sysdate()
+        </set>
+        where group_id = #{groupId}
+    </update>
+
+    <delete id="deleteTourGroupDetailById" parameterType="Long">
+        delete from tour_group_details where id = #{id}
+    </delete>
+
+    <delete id="deleteTourGroupDetailByGroupIds" parameterType="Long">
+        delete from tour_group_details where group_id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>
+
