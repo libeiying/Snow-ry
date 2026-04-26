@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.cart.mapper.ShoppingCartMapper">
+
+    <resultMap type="com.snow.business.cart.domain.ShoppingCart" id="ShoppingCartResult">
+        <id     property="id"              column="id"                />
+        <result property="userId"          column="user_id"           />
+        <result property="productId"       column="product_id"        />
+        <result property="productCode"     column="product_code"      />
+        <result property="productTitle"    column="product_title"     />
+        <result property="productSubTitle" column="product_sub_title" />
+        <result property="productImage"    column="product_image"     />
+        <result property="skuText"         column="sku_text"          />
+        <result property="unitPrice"       column="unit_price"        />
+        <result property="quantity"        column="quantity"          />
+        <result property="isChecked"       column="is_checked"        />
+        <result property="itemAmount"      column="item_amount"       />
+        <result property="status"          column="status"            />
+        <result property="invalidReason"   column="invalid_reason"    />
+        <result property="createTime"      column="create_time"       />
+        <result property="updateTime"      column="update_time"       />
+    </resultMap>
+
+    <sql id="selectShoppingCartVo">
+        select id, user_id, product_id, product_code, product_title, product_sub_title,
+               product_image, sku_text, unit_price, quantity, is_checked, item_amount,
+               status, invalid_reason, create_time, update_time
+          from shopping_cart
+    </sql>
+
+    <select id="selectShoppingCartByIdAndUserId" resultMap="ShoppingCartResult">
+        <include refid="selectShoppingCartVo"/>
+        where id = #{id}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectShoppingCartByUserAndProduct" resultMap="ShoppingCartResult">
+        <include refid="selectShoppingCartVo"/>
+        where user_id = #{userId}
+          and product_id = #{productId}
+        limit 1
+    </select>
+
+    <select id="selectShoppingCartListByUserId" resultMap="ShoppingCartResult">
+        <include refid="selectShoppingCartVo"/>
+        where user_id = #{userId}
+          and status = '0'
+        order by update_time desc, id desc
+    </select>
+
+    <select id="selectCheckedListForUpdate" resultMap="ShoppingCartResult">
+        <include refid="selectShoppingCartVo"/>
+        where user_id = #{userId}
+          and status = '0'
+          and is_checked = '1'
+        order by id asc
+        for update
+    </select>
+
+    <insert id="insertShoppingCart" parameterType="com.snow.business.cart.domain.ShoppingCart" useGeneratedKeys="true" keyProperty="id">
+        insert into shopping_cart (
+            user_id, product_id, product_code, product_title, product_sub_title,
+            product_image, sku_text, unit_price, quantity, is_checked, status, invalid_reason
+        ) values (
+            #{userId}, #{productId}, #{productCode}, #{productTitle}, #{productSubTitle},
+            #{productImage}, #{skuText}, #{unitPrice}, #{quantity}, #{isChecked}, #{status}, #{invalidReason}
+        )
+    </insert>
+
+    <update id="updateShoppingCart" parameterType="com.snow.business.cart.domain.ShoppingCart">
+        update shopping_cart
+        <set>
+            <if test="productCode != null">product_code = #{productCode},</if>
+            <if test="productTitle != null">product_title = #{productTitle},</if>
+            <if test="productSubTitle != null">product_sub_title = #{productSubTitle},</if>
+            <if test="productImage != null">product_image = #{productImage},</if>
+            <if test="skuText != null">sku_text = #{skuText},</if>
+            <if test="unitPrice != null">unit_price = #{unitPrice},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="isChecked != null">is_checked = #{isChecked},</if>
+            <if test="status != null">status = #{status},</if>
+            invalid_reason = #{invalidReason},
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+          and user_id = #{userId}
+    </update>
+
+    <update id="updateCheckedById">
+        update shopping_cart
+        set is_checked = #{isChecked},
+            update_time = sysdate()
+        where id = #{id}
+          and user_id = #{userId}
+          and status = '0'
+    </update>
+
+    <update id="updateCheckedAllByUserId">
+        update shopping_cart
+        set is_checked = #{isChecked},
+            update_time = sysdate()
+        where user_id = #{userId}
+          and status = '0'
+    </update>
+
+    <update id="updateQuantityById">
+        update shopping_cart
+        set quantity = #{quantity},
+            update_time = sysdate()
+        where id = #{id}
+          and user_id = #{userId}
+          and status = '0'
+    </update>
+
+    <delete id="deleteShoppingCartById">
+        delete from shopping_cart
+        where id = #{id}
+          and user_id = #{userId}
+    </delete>
+
+    <delete id="deleteCheckedByUserId">
+        delete from shopping_cart
+        where user_id = #{userId}
+          and status = '0'
+          and is_checked = '1'
+    </delete>
+
+    <update id="markCheckedAsOrdered">
+        update shopping_cart
+        set status = '2',
+            update_time = sysdate()
+        where user_id = #{userId}
+          and status = '0'
+          and is_checked = '1'
+    </update>
+
+    <select id="selectCartCount" resultType="java.lang.Integer">
+        select ifnull(sum(quantity), 0)
+          from shopping_cart
+         where user_id = #{userId}
+           and status = '0'
+    </select>
+
+    <select id="selectCheckedTotalAmount" resultType="java.math.BigDecimal">
+        select ifnull(sum(item_amount), 0)
+          from shopping_cart
+         where user_id = #{userId}
+           and status = '0'
+           and is_checked = '1'
+    </select>
+</mapper>

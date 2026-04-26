@@ -190,6 +190,180 @@ LOCK TABLES `gen_table_column` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `order_item`
+--
+
+DROP TABLE IF EXISTS `order_item`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_item` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `order_id` bigint NOT NULL COMMENT '订单ID（关联 orders.id）',
+  `order_no` varchar(32) NOT NULL COMMENT '订单号冗余（便于按订单号查询）',
+  `user_id` bigint NOT NULL COMMENT '用户ID冗余（便于分用户查询）',
+  `product_id` bigint NOT NULL COMMENT '商品ID',
+  `product_code` varchar(64) DEFAULT NULL COMMENT '商品编码快照',
+  `product_title` varchar(128) NOT NULL COMMENT '商品标题快照',
+  `product_image` varchar(255) DEFAULT NULL COMMENT '商品图片快照',
+  `sku_text` varchar(255) DEFAULT NULL COMMENT '规格文案快照',
+  `unit_price` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '下单时单价',
+  `quantity` int NOT NULL DEFAULT '1' COMMENT '购买数量',
+  `item_amount` decimal(10,2) GENERATED ALWAYS AS ((`unit_price` * `quantity`)) STORED COMMENT '行小计',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_item_order_id` (`order_id`),
+  KEY `idx_item_order_no` (`order_no`),
+  KEY `idx_item_user_ctime` (`user_id`,`create_time`),
+  CONSTRAINT `fk_item_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`),
+  CONSTRAINT `chk_item_quantity` CHECK ((`quantity` >= 1)),
+  CONSTRAINT `chk_item_unit_price` CHECK ((`unit_price` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_item`
+--
+
+LOCK TABLES `order_item` WRITE;
+/*!40000 ALTER TABLE `order_item` DISABLE KEYS */;
+INSERT INTO `order_item` (`id`, `order_id`, `order_no`, `user_id`, `product_id`, `product_code`, `product_title`, `product_image`, `sku_text`, `unit_price`, `quantity`, `create_time`, `update_time`) VALUES (1,1,'2026042616184035200100',100,2,'CC-TEST-002','中央大街雪花珐琅胸针','https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',NULL,45.00,1,'2026-04-26 16:18:40','2026-04-26 16:18:40'),(2,2,'2026042616224233400100',100,2,'CC-TEST-002','中央大街雪花珐琅胸针','https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',NULL,45.00,2,'2026-04-26 16:22:42','2026-04-26 16:22:42'),(3,3,'2026042616383072900100',100,2,'CC-TEST-002','中央大街雪花珐琅胸针','https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',NULL,45.00,3,'2026-04-26 16:38:30','2026-04-26 16:38:30');
+/*!40000 ALTER TABLE `order_item` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_payment`
+--
+
+DROP TABLE IF EXISTS `order_payment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_payment` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `payment_no` varchar(40) NOT NULL COMMENT '支付单号（业务唯一）',
+  `order_no` varchar(32) NOT NULL COMMENT '订单号',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `amount` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '支付金额',
+  `pay_channel` varchar(20) NOT NULL DEFAULT 'MOCK' COMMENT '支付渠道（WECHAT/ALIPAY/MOCK）',
+  `pay_status` char(1) NOT NULL DEFAULT '0' COMMENT '支付状态（0待支付 1成功 2失败）',
+  `transaction_no` varchar(64) DEFAULT NULL COMMENT '第三方交易号',
+  `callback_payload` text COMMENT '回调原文',
+  `fail_reason` varchar(255) DEFAULT NULL COMMENT '失败原因',
+  `paid_time` datetime DEFAULT NULL COMMENT '支付成功时间',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_payment_no` (`payment_no`),
+  KEY `idx_payment_order_no` (`order_no`),
+  KEY `idx_payment_user_ctime` (`user_id`,`create_time`),
+  KEY `idx_payment_txn_no` (`transaction_no`),
+  CONSTRAINT `chk_payment_amount` CHECK ((`amount` >= 0)),
+  CONSTRAINT `chk_payment_status` CHECK ((`pay_status` in (_utf8mb4'0',_utf8mb4'1',_utf8mb4'2')))
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单支付流水表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_payment`
+--
+
+LOCK TABLES `order_payment` WRITE;
+/*!40000 ALTER TABLE `order_payment` DISABLE KEYS */;
+INSERT INTO `order_payment` VALUES (1,'PAY20260426163835003900100','2026042616383072900100',100,135.00,'WECHAT','1','MOCK-1777192714986-a69a95','{\"source\":\"snowTravel-payment-page\",\"payMethod\":\"WECHAT\",\"orderNo\":\"2026042616383072900100\",\"amount\":135}',NULL,'2026-04-26 16:38:35','2026-04-26 16:38:35','2026-04-26 16:38:35');
+/*!40000 ALTER TABLE `order_payment` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `orders`
+--
+
+DROP TABLE IF EXISTS `orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `orders` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `order_no` varchar(32) NOT NULL COMMENT '订单号（业务唯一）',
+  `user_id` bigint NOT NULL COMMENT '下单用户ID',
+  `order_status` char(1) NOT NULL DEFAULT '0' COMMENT '订单状态（0待支付 1已支付 2已取消 3已发货 4已完成）',
+  `pay_status` char(1) NOT NULL DEFAULT '0' COMMENT '支付状态（0未支付 1已支付）',
+  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '订单总金额（商品总额）',
+  `pay_amount` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '实付金额',
+  `receiver_name` varchar(64) NOT NULL COMMENT '收货人',
+  `receiver_phone` varchar(20) NOT NULL COMMENT '收货电话',
+  `receiver_address` varchar(255) NOT NULL COMMENT '收货地址',
+  `remark` varchar(255) DEFAULT NULL COMMENT '订单备注',
+  `pay_time` datetime DEFAULT NULL COMMENT '支付时间',
+  `cancel_time` datetime DEFAULT NULL COMMENT '取消时间',
+  `ship_time` datetime DEFAULT NULL COMMENT '发货时间',
+  `finish_time` datetime DEFAULT NULL COMMENT '完成时间',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_orders_order_no` (`order_no`),
+  KEY `idx_orders_user_status_ctime` (`user_id`,`order_status`,`create_time`),
+  KEY `idx_orders_create_time` (`create_time`),
+  CONSTRAINT `chk_orders_pay_amount` CHECK ((`pay_amount` >= 0)),
+  CONSTRAINT `chk_orders_pay_status` CHECK ((`pay_status` in (_utf8mb4'0',_utf8mb4'1'))),
+  CONSTRAINT `chk_orders_status` CHECK ((`order_status` in (_utf8mb4'0',_utf8mb4'1',_utf8mb4'2',_utf8mb4'3',_utf8mb4'4'))),
+  CONSTRAINT `chk_orders_total_amount` CHECK ((`total_amount` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单主表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `orders`
+--
+
+LOCK TABLES `orders` WRITE;
+/*!40000 ALTER TABLE `orders` DISABLE KEYS */;
+INSERT INTO `orders` VALUES (1,'2026042616184035200100',100,'2','0',45.00,45.00,'张三','13800138000','黑龙江省哈尔滨市道里区中央大街','',NULL,NULL,NULL,NULL,'2026-04-26 16:18:40','2026-04-26 16:18:50'),(2,'2026042616224233400100',100,'2','0',90.00,90.00,'默认收货人','13800138000','黑龙江省哈尔滨市道里区中央大街','',NULL,NULL,NULL,NULL,'2026-04-26 16:22:42','2026-04-26 16:37:15'),(3,'2026042616383072900100',100,'1','1',135.00,135.00,'默认收货人','13800138000','黑龙江省哈尔滨市道里区中央大街','',NULL,NULL,NULL,NULL,'2026-04-26 16:38:30','2026-04-26 16:38:35');
+/*!40000 ALTER TABLE `orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `shopping_cart`
+--
+
+DROP TABLE IF EXISTS `shopping_cart`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shopping_cart` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID（关联 sys_user.user_id）',
+  `product_id` bigint NOT NULL COMMENT '商品ID（关联 cultural_creative_products.id）',
+  `product_code` varchar(64) DEFAULT NULL COMMENT '商品编码快照',
+  `product_title` varchar(128) NOT NULL COMMENT '商品标题快照',
+  `product_sub_title` varchar(255) DEFAULT NULL COMMENT '商品副标题快照',
+  `product_image` varchar(255) DEFAULT NULL COMMENT '商品封面图快照',
+  `sku_text` varchar(255) DEFAULT NULL COMMENT '规格文案快照（如颜色/尺寸）',
+  `unit_price` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '加入购物车时单价快照',
+  `quantity` int NOT NULL DEFAULT '1' COMMENT '购买数量',
+  `is_checked` char(1) NOT NULL DEFAULT '1' COMMENT '勾选状态（1选中 0未选中）',
+  `item_amount` decimal(10,2) GENERATED ALWAYS AS ((`unit_price` * `quantity`)) STORED COMMENT '行小计（单价*数量）',
+  `status` char(1) NOT NULL DEFAULT '0' COMMENT '记录状态（0正常 1失效 2已下单）',
+  `invalid_reason` varchar(255) DEFAULT NULL COMMENT '失效原因（如下架/库存不足）',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_cart_user_product` (`user_id`,`product_id`),
+  KEY `idx_cart_user_status_update` (`user_id`,`status`,`update_time`),
+  KEY `idx_cart_user_checked_status` (`user_id`,`is_checked`,`status`),
+  KEY `idx_cart_product` (`product_id`),
+  CONSTRAINT `chk_cart_checked` CHECK ((`is_checked` in (_utf8mb4'0',_utf8mb4'1'))),
+  CONSTRAINT `chk_cart_quantity` CHECK ((`quantity` >= 1)),
+  CONSTRAINT `chk_cart_status` CHECK ((`status` in (_utf8mb4'0',_utf8mb4'1',_utf8mb4'2')))
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='购物车单表';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `shopping_cart`
+--
+
+LOCK TABLES `shopping_cart` WRITE;
+/*!40000 ALTER TABLE `shopping_cart` DISABLE KEYS */;
+INSERT INTO `shopping_cart` (`id`, `user_id`, `product_id`, `product_code`, `product_title`, `product_sub_title`, `product_image`, `sku_text`, `unit_price`, `quantity`, `is_checked`, `status`, `invalid_reason`, `create_time`, `update_time`) VALUES (5,100,2,'CC-TEST-002','中央大街雪花珐琅胸针','法式珐琅工艺，冬季穿搭点睛','https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',NULL,45.00,3,'1','2',NULL,'2026-04-26 16:18:27','2026-04-26 16:38:30');
+/*!40000 ALTER TABLE `shopping_cart` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `sys_config`
 --
 
@@ -280,7 +454,7 @@ CREATE TABLE `sys_dict_data` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典数据表';
+) ENGINE=InnoDB AUTO_INCREMENT=109 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典数据表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -289,7 +463,7 @@ CREATE TABLE `sys_dict_data` (
 
 LOCK TABLES `sys_dict_data` WRITE;
 /*!40000 ALTER TABLE `sys_dict_data` DISABLE KEYS */;
-INSERT INTO `sys_dict_data` VALUES (1,1,'男','0','sys_user_sex','','','Y','0','admin','2026-04-25 10:31:32','',NULL,'性别男'),(2,2,'女','1','sys_user_sex','','','N','0','admin','2026-04-25 10:31:32','',NULL,'性别女'),(3,3,'未知','2','sys_user_sex','','','N','0','admin','2026-04-25 10:31:32','',NULL,'性别未知'),(4,1,'显示','0','sys_show_hide','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'显示菜单'),(5,2,'隐藏','1','sys_show_hide','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'隐藏菜单'),(6,1,'正常','0','sys_normal_disable','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(7,2,'停用','1','sys_normal_disable','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'停用状态'),(8,1,'正常','0','sys_job_status','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(9,2,'暂停','1','sys_job_status','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'停用状态'),(10,1,'默认','DEFAULT','sys_job_group','','','Y','0','admin','2026-04-25 10:31:32','',NULL,'默认分组'),(11,2,'系统','SYSTEM','sys_job_group','','','N','0','admin','2026-04-25 10:31:32','',NULL,'系统分组'),(12,1,'是','Y','sys_yes_no','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'系统默认是'),(13,2,'否','N','sys_yes_no','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'系统默认否'),(14,1,'通知','1','sys_notice_type','','warning','Y','0','admin','2026-04-25 10:31:32','',NULL,'通知'),(15,2,'公告','2','sys_notice_type','','success','N','0','admin','2026-04-25 10:31:32','',NULL,'公告'),(16,1,'正常','0','sys_notice_status','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(17,2,'关闭','1','sys_notice_status','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'关闭状态'),(18,99,'其他','0','sys_oper_type','','info','N','0','admin','2026-04-25 10:31:32','',NULL,'其他操作'),(19,1,'新增','1','sys_oper_type','','info','N','0','admin','2026-04-25 10:31:32','',NULL,'新增操作'),(20,2,'修改','2','sys_oper_type','','info','N','0','admin','2026-04-25 10:31:32','',NULL,'修改操作'),(21,3,'删除','3','sys_oper_type','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'删除操作'),(22,4,'授权','4','sys_oper_type','','primary','N','0','admin','2026-04-25 10:31:32','',NULL,'授权操作'),(23,5,'导出','5','sys_oper_type','','warning','N','0','admin','2026-04-25 10:31:32','',NULL,'导出操作'),(24,6,'导入','6','sys_oper_type','','warning','N','0','admin','2026-04-25 10:31:32','',NULL,'导入操作'),(25,7,'强退','7','sys_oper_type','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'强退操作'),(26,8,'生成代码','8','sys_oper_type','','warning','N','0','admin','2026-04-25 10:31:32','',NULL,'生成操作'),(27,9,'清空数据','9','sys_oper_type','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'清空操作'),(28,1,'成功','0','sys_common_status','','primary','N','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(29,2,'失败','1','sys_common_status','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'停用状态'),(30,1,'上架','0','biz_tour_group_status','','success','Y','0','admin','2026-04-25 22:22:19','',NULL,'tour_groups.status=0'),(31,2,'下架','1','biz_tour_group_status','','info','N','0','admin','2026-04-25 22:22:19','',NULL,'tour_groups.status=1'),(32,1,'正常','0','biz_tour_group_detail_status','','primary','Y','0','admin','2026-04-25 22:22:19','',NULL,'tour_group_details.status=0'),(33,2,'停用','1','biz_tour_group_detail_status','','danger','N','0','admin','2026-04-25 22:22:19','',NULL,'tour_group_details.status=1');
+INSERT INTO `sys_dict_data` VALUES (1,1,'男','0','sys_user_sex','','','Y','0','admin','2026-04-25 10:31:32','',NULL,'性别男'),(2,2,'女','1','sys_user_sex','','','N','0','admin','2026-04-25 10:31:32','',NULL,'性别女'),(3,3,'未知','2','sys_user_sex','','','N','0','admin','2026-04-25 10:31:32','',NULL,'性别未知'),(4,1,'显示','0','sys_show_hide','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'显示菜单'),(5,2,'隐藏','1','sys_show_hide','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'隐藏菜单'),(6,1,'正常','0','sys_normal_disable','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(7,2,'停用','1','sys_normal_disable','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'停用状态'),(8,1,'正常','0','sys_job_status','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(9,2,'暂停','1','sys_job_status','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'停用状态'),(10,1,'默认','DEFAULT','sys_job_group','','','Y','0','admin','2026-04-25 10:31:32','',NULL,'默认分组'),(11,2,'系统','SYSTEM','sys_job_group','','','N','0','admin','2026-04-25 10:31:32','',NULL,'系统分组'),(12,1,'是','Y','sys_yes_no','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'系统默认是'),(13,2,'否','N','sys_yes_no','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'系统默认否'),(14,1,'通知','1','sys_notice_type','','warning','Y','0','admin','2026-04-25 10:31:32','',NULL,'通知'),(15,2,'公告','2','sys_notice_type','','success','N','0','admin','2026-04-25 10:31:32','',NULL,'公告'),(16,1,'正常','0','sys_notice_status','','primary','Y','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(17,2,'关闭','1','sys_notice_status','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'关闭状态'),(18,99,'其他','0','sys_oper_type','','info','N','0','admin','2026-04-25 10:31:32','',NULL,'其他操作'),(19,1,'新增','1','sys_oper_type','','info','N','0','admin','2026-04-25 10:31:32','',NULL,'新增操作'),(20,2,'修改','2','sys_oper_type','','info','N','0','admin','2026-04-25 10:31:32','',NULL,'修改操作'),(21,3,'删除','3','sys_oper_type','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'删除操作'),(22,4,'授权','4','sys_oper_type','','primary','N','0','admin','2026-04-25 10:31:32','',NULL,'授权操作'),(23,5,'导出','5','sys_oper_type','','warning','N','0','admin','2026-04-25 10:31:32','',NULL,'导出操作'),(24,6,'导入','6','sys_oper_type','','warning','N','0','admin','2026-04-25 10:31:32','',NULL,'导入操作'),(25,7,'强退','7','sys_oper_type','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'强退操作'),(26,8,'生成代码','8','sys_oper_type','','warning','N','0','admin','2026-04-25 10:31:32','',NULL,'生成操作'),(27,9,'清空数据','9','sys_oper_type','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'清空操作'),(28,1,'成功','0','sys_common_status','','primary','N','0','admin','2026-04-25 10:31:32','',NULL,'正常状态'),(29,2,'失败','1','sys_common_status','','danger','N','0','admin','2026-04-25 10:31:32','',NULL,'停用状态'),(30,1,'上架','0','biz_tour_group_status','','success','Y','0','admin','2026-04-25 22:22:19','',NULL,'tour_groups.status=0'),(31,2,'下架','1','biz_tour_group_status','','info','N','0','admin','2026-04-25 22:22:19','',NULL,'tour_groups.status=1'),(32,1,'正常','0','biz_tour_group_detail_status','','primary','Y','0','admin','2026-04-25 22:22:19','',NULL,'tour_group_details.status=0'),(33,2,'停用','1','biz_tour_group_detail_status','','danger','N','0','admin','2026-04-25 22:22:19','',NULL,'tour_group_details.status=1'),(100,1,'待支付','0','biz_order_status','','warning','Y','0','admin','2026-04-26 16:02:40','',NULL,'orders.order_status=0'),(101,2,'已支付','1','biz_order_status','','primary','N','0','admin','2026-04-26 16:02:40','',NULL,'orders.order_status=1'),(102,3,'已取消','2','biz_order_status','','danger','N','0','admin','2026-04-26 16:02:40','',NULL,'orders.order_status=2'),(103,4,'已发货','3','biz_order_status','','info','N','0','admin','2026-04-26 16:02:40','',NULL,'orders.order_status=3'),(104,5,'已完成','4','biz_order_status','','success','N','0','admin','2026-04-26 16:02:40','',NULL,'orders.order_status=4'),(105,1,'未支付','0','biz_pay_status','','warning','Y','0','admin','2026-04-26 16:02:40','',NULL,'orders.pay_status=0'),(106,2,'已支付','1','biz_pay_status','','success','N','0','admin','2026-04-26 16:02:40','',NULL,'orders.pay_status=1'),(107,1,'微信支付','WECHAT','biz_pay_channel','','success','Y','0','admin','2026-04-26 16:37:52','',NULL,'微信支付渠道'),(108,2,'支付宝','ALIPAY','biz_pay_channel','','primary','N','0','admin','2026-04-26 16:37:52','',NULL,'支付宝支付渠道');
 /*!40000 ALTER TABLE `sys_dict_data` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -312,7 +486,7 @@ CREATE TABLE `sys_dict_type` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_id`),
   UNIQUE KEY `dict_type` (`dict_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典类型表';
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='字典类型表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -321,7 +495,7 @@ CREATE TABLE `sys_dict_type` (
 
 LOCK TABLES `sys_dict_type` WRITE;
 /*!40000 ALTER TABLE `sys_dict_type` DISABLE KEYS */;
-INSERT INTO `sys_dict_type` VALUES (1,'用户性别','sys_user_sex','0','admin','2026-04-25 10:31:32','',NULL,'用户性别列表'),(2,'菜单状态','sys_show_hide','0','admin','2026-04-25 10:31:32','',NULL,'菜单状态列表'),(3,'系统开关','sys_normal_disable','0','admin','2026-04-25 10:31:32','',NULL,'系统开关列表'),(4,'任务状态','sys_job_status','0','admin','2026-04-25 10:31:32','',NULL,'任务状态列表'),(5,'任务分组','sys_job_group','0','admin','2026-04-25 10:31:32','',NULL,'任务分组列表'),(6,'系统是否','sys_yes_no','0','admin','2026-04-25 10:31:32','',NULL,'系统是否列表'),(7,'通知类型','sys_notice_type','0','admin','2026-04-25 10:31:32','',NULL,'通知类型列表'),(8,'通知状态','sys_notice_status','0','admin','2026-04-25 10:31:32','',NULL,'通知状态列表'),(9,'操作类型','sys_oper_type','0','admin','2026-04-25 10:31:32','',NULL,'操作类型列表'),(10,'系统状态','sys_common_status','0','admin','2026-04-25 10:31:32','',NULL,'登录状态列表'),(11,'旅游团上架状态','biz_tour_group_status','0','admin','2026-04-25 22:22:19','',NULL,'tour_groups.status 字典'),(12,'旅游团详情状态','biz_tour_group_detail_status','0','admin','2026-04-25 22:22:19','',NULL,'tour_group_details.status 字典');
+INSERT INTO `sys_dict_type` VALUES (1,'用户性别','sys_user_sex','0','admin','2026-04-25 10:31:32','',NULL,'用户性别列表'),(2,'菜单状态','sys_show_hide','0','admin','2026-04-25 10:31:32','',NULL,'菜单状态列表'),(3,'系统开关','sys_normal_disable','0','admin','2026-04-25 10:31:32','',NULL,'系统开关列表'),(4,'任务状态','sys_job_status','0','admin','2026-04-25 10:31:32','',NULL,'任务状态列表'),(5,'任务分组','sys_job_group','0','admin','2026-04-25 10:31:32','',NULL,'任务分组列表'),(6,'系统是否','sys_yes_no','0','admin','2026-04-25 10:31:32','',NULL,'系统是否列表'),(7,'通知类型','sys_notice_type','0','admin','2026-04-25 10:31:32','',NULL,'通知类型列表'),(8,'通知状态','sys_notice_status','0','admin','2026-04-25 10:31:32','',NULL,'通知状态列表'),(9,'操作类型','sys_oper_type','0','admin','2026-04-25 10:31:32','',NULL,'操作类型列表'),(10,'系统状态','sys_common_status','0','admin','2026-04-25 10:31:32','',NULL,'登录状态列表'),(11,'旅游团上架状态','biz_tour_group_status','0','admin','2026-04-25 22:22:19','',NULL,'tour_groups.status 字典'),(12,'旅游团详情状态','biz_tour_group_detail_status','0','admin','2026-04-25 22:22:19','',NULL,'tour_group_details.status 字典'),(100,'订单状态','biz_order_status','0','admin','2026-04-26 16:02:40','',NULL,'orders.order_status 字典'),(101,'支付状态','biz_pay_status','0','admin','2026-04-26 16:02:40','',NULL,'orders.pay_status 字典'),(102,'支付渠道','biz_pay_channel','0','admin','2026-04-26 16:37:52','',NULL,'order_payment.pay_channel 字典');
 /*!40000 ALTER TABLE `sys_dict_type` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -347,7 +521,7 @@ CREATE TABLE `sys_job` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注信息',
   PRIMARY KEY (`job_id`,`job_name`,`job_group`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务调度表';
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务调度表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -356,7 +530,7 @@ CREATE TABLE `sys_job` (
 
 LOCK TABLES `sys_job` WRITE;
 /*!40000 ALTER TABLE `sys_job` DISABLE KEYS */;
-INSERT INTO `sys_job` VALUES (1,'系统默认（无参）','DEFAULT','ryTask.ryNoParams','0/10 * * * * ?','3','1','1','admin','2026-04-25 10:31:33','',NULL,''),(2,'系统默认（有参）','DEFAULT','ryTask.ryParams(\'ry\')','0/15 * * * * ?','3','1','1','admin','2026-04-25 10:31:33','',NULL,''),(3,'系统默认（多参）','DEFAULT','ryTask.ryMultipleParams(\'ry\', true, 2000L, 316.50D, 100)','0/20 * * * * ?','3','1','1','admin','2026-04-25 10:31:33','',NULL,'');
+INSERT INTO `sys_job` VALUES (1,'系统默认（无参）','DEFAULT','ryTask.ryNoParams','0/10 * * * * ?','3','1','1','admin','2026-04-25 10:31:33','',NULL,''),(2,'系统默认（有参）','DEFAULT','ryTask.ryParams(\'ry\')','0/15 * * * * ?','3','1','1','admin','2026-04-25 10:31:33','',NULL,''),(3,'系统默认（多参）','DEFAULT','ryTask.ryMultipleParams(\'ry\', true, 2000L, 316.50D, 100)','0/20 * * * * ?','3','1','1','admin','2026-04-25 10:31:33','',NULL,''),(100,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','0 */1 * * * ?','3','1','0','admin','2026-04-26 16:13:39','',NULL,'每分钟执行一次，自动取消超过15分钟未支付订单');
 /*!40000 ALTER TABLE `sys_job` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -377,7 +551,7 @@ CREATE TABLE `sys_job_log` (
   `exception_info` varchar(2000) DEFAULT '' COMMENT '异常信息',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`job_log_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务调度日志表';
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时任务调度日志表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -386,6 +560,7 @@ CREATE TABLE `sys_job_log` (
 
 LOCK TABLES `sys_job_log` WRITE;
 /*!40000 ALTER TABLE `sys_job_log` DISABLE KEYS */;
+INSERT INTO `sys_job_log` VALUES (1,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：65毫秒','0','','2026-04-26 16:14:00'),(2,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：17毫秒','0','','2026-04-26 16:15:00'),(3,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:16:00'),(4,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：16毫秒','0','','2026-04-26 16:17:00'),(5,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 16:18:00'),(6,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：9毫秒','0','','2026-04-26 16:19:00'),(7,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 16:20:00'),(8,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:21:00'),(9,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：14毫秒','0','','2026-04-26 16:22:00'),(10,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 16:23:00'),(11,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 16:24:00'),(12,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 16:25:00'),(13,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：19毫秒','0','','2026-04-26 16:27:00'),(14,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：9毫秒','0','','2026-04-26 16:28:00'),(15,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：34毫秒','0','','2026-04-26 16:29:00'),(16,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 16:30:00'),(17,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:31:00'),(18,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 16:32:00'),(19,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：11毫秒','0','','2026-04-26 16:33:00'),(20,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:34:00'),(21,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：9毫秒','0','','2026-04-26 16:35:00'),(22,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 16:36:00'),(23,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:37:00'),(24,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：9毫秒','0','','2026-04-26 16:39:00'),(25,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 16:40:00'),(26,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 16:41:00'),(27,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：11毫秒','0','','2026-04-26 16:42:00'),(28,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：12毫秒','0','','2026-04-26 16:43:00'),(29,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：0毫秒','0','','2026-04-26 16:44:00'),(30,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 16:45:00'),(31,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：11毫秒','0','','2026-04-26 16:46:00'),(32,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 16:47:00'),(33,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：12毫秒','0','','2026-04-26 16:48:00'),(34,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 16:49:00'),(35,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 16:50:00'),(36,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：15毫秒','0','','2026-04-26 16:51:00'),(37,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：11毫秒','0','','2026-04-26 16:52:00'),(38,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:53:00'),(39,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：9毫秒','0','','2026-04-26 16:54:00'),(40,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 16:55:00'),(41,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 16:56:00'),(42,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 16:57:00'),(43,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：10毫秒','0','','2026-04-26 16:58:00'),(44,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：0毫秒','0','','2026-04-26 16:59:00'),(45,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：0毫秒','0','','2026-04-26 17:00:00'),(46,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：3毫秒','0','','2026-04-26 17:01:00'),(47,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：4毫秒','0','','2026-04-26 17:02:00'),(48,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：4毫秒','0','','2026-04-26 17:03:00'),(49,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：9毫秒','0','','2026-04-26 17:04:00'),(50,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 17:05:00'),(51,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:06:00'),(52,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 17:07:00'),(53,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：2毫秒','0','','2026-04-26 17:08:00'),(54,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：0毫秒','0','','2026-04-26 17:09:00'),(55,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:10:00'),(56,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 17:11:00'),(57,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：7毫秒','0','','2026-04-26 17:12:00'),(58,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：0毫秒','0','','2026-04-26 17:13:00'),(59,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：2毫秒','0','','2026-04-26 17:14:00'),(60,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：3毫秒','0','','2026-04-26 17:15:00'),(61,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 17:16:00'),(62,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：4毫秒','0','','2026-04-26 17:17:00'),(63,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:18:00'),(64,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:19:00'),(65,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:20:00'),(66,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 17:21:00'),(67,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：4毫秒','0','','2026-04-26 17:22:00'),(68,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：4毫秒','0','','2026-04-26 17:23:00'),(69,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:24:00'),(70,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：6毫秒','0','','2026-04-26 17:25:00'),(71,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：5毫秒','0','','2026-04-26 17:26:00'),(72,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：8毫秒','0','','2026-04-26 17:27:00'),(73,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：4毫秒','0','','2026-04-26 17:28:00'),(74,'订单超时自动取消','DEFAULT','orderTask.cancelTimeoutOrders()','订单超时自动取消 总共耗时：3毫秒','0','','2026-04-26 17:29:00');
 /*!40000 ALTER TABLE `sys_job_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -409,7 +584,7 @@ CREATE TABLE `sys_logininfor` (
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
   KEY `idx_sys_logininfor_lt` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统访问记录';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -418,7 +593,7 @@ CREATE TABLE `sys_logininfor` (
 
 LOCK TABLES `sys_logininfor` WRITE;
 /*!40000 ALTER TABLE `sys_logininfor` DISABLE KEYS */;
-INSERT INTO `sys_logininfor` VALUES (100,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 10:56:17'),(101,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 11:27:57'),(102,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','注册成功','2026-04-25 11:36:07'),(103,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 11:36:14'),(104,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 11:36:19'),(105,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','退出成功','2026-04-25 11:44:13'),(106,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 12:09:56'),(107,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 12:10:01'),(108,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 13:41:44'),(109,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 14:45:36'),(110,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','退出成功','2026-04-25 15:02:16'),(111,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 15:16:50'),(112,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 15:16:53'),(113,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 15:17:12'),(114,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 15:17:15'),(115,'23033101','127.0.0.1','内网IP','Chrome 14','Windows 10','0','注册成功','2026-04-25 20:13:12'),(116,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 20:40:03'),(117,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 20:40:08'),(118,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 21:21:14'),(119,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 22:18:02');
+INSERT INTO `sys_logininfor` VALUES (100,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 10:56:17'),(101,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 11:27:57'),(102,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','注册成功','2026-04-25 11:36:07'),(103,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 11:36:14'),(104,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 11:36:19'),(105,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','退出成功','2026-04-25 11:44:13'),(106,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 12:09:56'),(107,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 12:10:01'),(108,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 13:41:44'),(109,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 14:45:36'),(110,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','退出成功','2026-04-25 15:02:16'),(111,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 15:16:50'),(112,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 15:16:53'),(113,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 15:17:12'),(114,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 15:17:15'),(115,'23033101','127.0.0.1','内网IP','Chrome 14','Windows 10','0','注册成功','2026-04-25 20:13:12'),(116,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-25 20:40:03'),(117,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 20:40:08'),(118,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 21:21:14'),(119,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-25 22:18:02'),(120,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-26 14:32:54'),(121,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-26 14:34:01'),(122,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-26 14:34:05'),(123,'23033112','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-26 15:32:40'),(124,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','1','验证码已失效','2026-04-26 16:17:27'),(125,'admin','127.0.0.1','内网IP','Chrome 14','Windows 10','0','登录成功','2026-04-26 16:17:31');
 /*!40000 ALTER TABLE `sys_logininfor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -525,7 +700,7 @@ CREATE TABLE `sys_oper_log` (
   KEY `idx_sys_oper_log_bt` (`business_type`),
   KEY `idx_sys_oper_log_s` (`status`),
   KEY `idx_sys_oper_log_ot` (`oper_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作日志记录';
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作日志记录';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -534,7 +709,7 @@ CREATE TABLE `sys_oper_log` (
 
 LOCK TABLES `sys_oper_log` WRITE;
 /*!40000 ALTER TABLE `sys_oper_log` DISABLE KEYS */;
-INSERT INTO `sys_oper_log` VALUES (100,'参数管理',2,'com.snow.web.controller.system.SysConfigController.edit()','PUT',1,'admin','研发部门','/system/config','127.0.0.1','内网IP','{\"configId\":5,\"configKey\":\"sys.account.registerUser\",\"configName\":\"账号自助-是否开启用户注册功能\",\"configType\":\"Y\",\"configValue\":\"true\\n\",\"createBy\":\"admin\",\"createTime\":\"2026-04-25 10:31:33\",\"params\":{},\"remark\":\"是否开启注册用户功能（true开启，false关闭）\",\"updateBy\":\"admin\"}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 11:28:22',58),(101,'菜单管理',1,'com.snow.web.controller.system.SysMenuController.add()','POST',1,'admin','研发部门','/system/menu','127.0.0.1','内网IP','{\"children\":[],\"createBy\":\"admin\",\"icon\":\"cascader\",\"isCache\":\"0\",\"isFrame\":\"1\",\"menuName\":\"旅游团管理\",\"menuType\":\"M\",\"orderNum\":5,\"params\":{},\"parentId\":0,\"path\":\"travel\",\"status\":\"0\",\"visible\":\"0\"}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 22:18:24',58);
+INSERT INTO `sys_oper_log` VALUES (100,'参数管理',2,'com.snow.web.controller.system.SysConfigController.edit()','PUT',1,'admin','研发部门','/system/config','127.0.0.1','内网IP','{\"configId\":5,\"configKey\":\"sys.account.registerUser\",\"configName\":\"账号自助-是否开启用户注册功能\",\"configType\":\"Y\",\"configValue\":\"true\\n\",\"createBy\":\"admin\",\"createTime\":\"2026-04-25 10:31:33\",\"params\":{},\"remark\":\"是否开启注册用户功能（true开启，false关闭）\",\"updateBy\":\"admin\"}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 11:28:22',58),(101,'菜单管理',1,'com.snow.web.controller.system.SysMenuController.add()','POST',1,'admin','研发部门','/system/menu','127.0.0.1','内网IP','{\"children\":[],\"createBy\":\"admin\",\"icon\":\"cascader\",\"isCache\":\"0\",\"isFrame\":\"1\",\"menuName\":\"旅游团管理\",\"menuType\":\"M\",\"orderNum\":5,\"params\":{},\"parentId\":0,\"path\":\"travel\",\"status\":\"0\",\"visible\":\"0\"}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 22:18:24',58),(102,'旅游团管理',2,'com.snow.web.controller.business.TourGroupManageController.edit()','PUT',1,'admin','研发部门','/business/tourGroup','127.0.0.1','内网IP','{\"detail\":{\"bookingNotes\":\"<p>预订须知：请携带有效证件；冬季注意保暖；如遇极端天气可能调整行程。</p>\",\"costExcludes\":\"<p>费用不含：个人消费、单房差、部分景区内小交通</p>\",\"costIncludes\":\"<p>费用包含：车辆、酒店、导游服务、部分门票（以出团通知为准）</p>\",\"createTime\":\"2026-04-25 21:01:16\",\"groupId\":1,\"highlights\":\"<p>亮点： - 经典冰雪线路，一次打卡多地 - 赠送滑雪体验（以当天雪场开放为准） - 夜游雪乡（天气/交通可能调整）</p>\",\"id\":1,\"imagesJson\":\"[{\\\"path\\\":\\\"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":1},{\\\"path\\\":\\\"https://images.unsplash.com/photo-1542704792-e30dac463c90?auto=format&fit=crop&w=1200&q=80\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":2},{\\\"path\\\":\\\"/profile/upload/2026/04/25/pexels-andyhvu-3244513_20260425223556A001.jpg\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":3}]\",\"itineraryText\":\"<p><strong>行程概览</strong></p><p>D1 抵达后自由活动</p><p>D2 哈尔滨市区/冰雪主题景点</p><p>D3 雪乡全天</p><p>D4 亚布力滑雪</p><p>D5 返程</p>\",\"params\":{},\"status\":\"0\",\"updateTime\":\"2026-04-25 21:01:16\"},\"group\":{\"coverImage\":\"https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80\",\"createTime\":\"2026-04-25 21:01:16\",\"days\":5,\"departureCity\":\"哈尔滨\",\"destinationCity\":\"雪乡\",\"groupCode\":\"TG-TEST-001\",\"id\":1,\"minPrice\":2699,\"nights\":4,\"params\":{},\"sortOrder\":10,\"status\":\"0\",\"subTitle\":\"冰雪王国经典路线｜滑雪+雪乡夜景\",\"tags\":\"雪乡,滑雪,冰雪大世界\",\"title\":\"哈尔滨-雪乡-亚布力 5天4晚跟团游\",\"updateTime\":\"2026-04-25 21:01:16\"}}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 22:36:03',95),(103,'旅游团管理',2,'com.snow.web.controller.business.TourGroupManageController.edit()','PUT',1,'admin','研发部门','/business/tourGroup','127.0.0.1','内网IP','{\"detail\":{\"bookingNotes\":\"<p>预订须知：部分场馆需提前预约；请遵守当地参观规定。</p>\",\"costExcludes\":\"<p>费用不含：餐食、个人消费、部分门票</p>\",\"costIncludes\":\"<p>费用包含：用车、住宿、导游服务</p>\",\"createTime\":\"2026-04-25 21:01:16\",\"groupId\":3,\"highlights\":\"<p>亮点： - 历史人文讲解更深入 - 轻松行程，适合亲子/长辈 - 城市美食自由探索</p>\",\"id\":3,\"imagesJson\":\"[{\\\"path\\\":\\\"/profile/upload/2026/04/25/屏幕截图 2026-04-25 225616_20260425225638A003.png\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":1}]\",\"itineraryText\":\"<p><strong>行程概览</strong></p><p>D1 沈阳历史文化</p><p>D2 前往丹东+江景</p><p>D3 返程</p>\",\"params\":{},\"status\":\"0\",\"updateTime\":\"2026-04-25 21:01:16\"},\"group\":{\"coverImage\":\"https://images.unsplash.com/photo-1543349689-9a4d426bee8e?auto=format&fit=crop&w=1200&q=80\",\"createTime\":\"2026-04-25 21:01:16\",\"days\":3,\"departureCity\":\"沈阳\",\"destinationCity\":\"丹东\",\"groupCode\":\"TG-TEST-003\",\"id\":3,\"minPrice\":1599,\"nights\":2,\"params\":{},\"sortOrder\":30,\"status\":\"0\",\"subTitle\":\"故宫博物院｜鸭绿江断桥｜人文讲解\",\"tags\":\"历史,人文,小众\",\"title\":\"沈阳-丹东 3天2晚历史人文之旅\",\"updateTime\":\"2026-04-25 21:01:16\"}}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 22:56:43',53),(104,'旅游团管理',2,'com.snow.web.controller.business.TourGroupManageController.edit()','PUT',1,'admin','研发部门','/business/tourGroup','127.0.0.1','内网IP','{\"detail\":{\"bookingNotes\":\"<p>预订须知：部分场馆需提前预约；请遵守当地参观规定。</p>\",\"costExcludes\":\"<p>费用不含：餐食、个人消费、部分门票</p>\",\"costIncludes\":\"<p>费用包含：用车、住宿、导游服务</p>\",\"createTime\":\"2026-04-25 21:01:16\",\"groupId\":3,\"highlights\":\"<p>亮点： - 历史人文讲解更深入 - 轻松行程，适合亲子/长辈 - 城市美食自由探索</p>\",\"id\":3,\"imagesJson\":\"[{\\\"path\\\":\\\"/profile/upload/2026/04/25/屏幕截图 2026-04-25 225616_20260425225638A003.png\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":1}]\",\"itineraryText\":\"<p><strong>行程概览</strong></p><p>D1 沈阳历史文化</p><p>D2 前往丹东+江景</p><p>D3 返程</p>\",\"params\":{},\"status\":\"0\",\"updateTime\":\"2026-04-25 22:56:43\"},\"group\":{\"coverImage\":\"/profile/upload/2026/04/25/屏幕截图 2026-04-25 225616_20260425225711A004.png\",\"createTime\":\"2026-04-25 21:01:16\",\"days\":3,\"departureCity\":\"沈阳\",\"destinationCity\":\"丹东\",\"groupCode\":\"TG-TEST-003\",\"id\":3,\"minPrice\":1599,\"nights\":2,\"params\":{},\"sortOrder\":30,\"status\":\"0\",\"subTitle\":\"故宫博物院｜鸭绿江断桥｜人文讲解\",\"tags\":\"历史,人文,小众\",\"title\":\"沈阳-丹东 3天2晚历史人文之旅\",\"updateTime\":\"2026-04-25 22:56:43\"}}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-25 22:57:15',47),(105,'旅游团管理',2,'com.snow.web.controller.business.TourGroupManageController.edit()','PUT',1,'admin','研发部门','/business/tourGroup','127.0.0.1','内网IP','{\"detail\":{\"bookingNotes\":\"<p>预订须知：如需泡温泉请自备泳衣；高海拔/低温请注意身体状况。</p>\",\"costExcludes\":\"<p>费用不含：个人消费、餐食（若未包含）、部分二消项目</p>\",\"costIncludes\":\"<p>费用包含：用车、酒店、导游/司兼导、基础保险</p>\",\"createTime\":\"2026-04-25 21:01:16\",\"groupId\":2,\"highlights\":\"<p>亮点： - 小团慢游，节奏更舒适 - 温泉放松+雾凇观赏 - 酒店升级（以实际库存为准）</p>\",\"id\":2,\"imagesJson\":\"[{\\\"path\\\":\\\"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":1},{\\\"path\\\":\\\"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":2}]\",\"itineraryText\":\"<p><strong>行程概览</strong></p><p>D1 集合出发</p><p>D2 长白山景区</p><p>D3 温泉/雾凇</p><p>D4 返程</p>\",\"params\":{},\"status\":\"0\",\"updateTime\":\"2026-04-25 21:01:16\"},\"group\":{\"coverImage\":\"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1200&q=80\",\"createTime\":\"2026-04-25 21:01:16\",\"days\":4,\"departureCity\":\"长春\",\"destinationCity\":\"长白山\",\"groupCode\":\"TG-TEST-002\",\"id\":2,\"minPrice\":3299,\"nights\":3,\"params\":{},\"sortOrder\":20,\"status\":\"0\",\"subTitle\":\"温泉+雾凇｜酒店升级｜2-6人小团\",\"tags\":\"长白山,温泉,雾凇\",\"title\":\"长白山-雾凇岛 4天3晚轻奢小团\",\"updateTime\":\"2026-04-25 21:01:16\"}}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-26 14:34:18',101),(106,'旅游团管理',2,'com.snow.web.controller.business.TourGroupManageController.edit()','PUT',1,'admin','研发部门','/business/tourGroup','127.0.0.1','内网IP','{\"detail\":{\"bookingNotes\":\"<p>预订须知：极寒环境请做好保暖；部分体验受天气影响。</p>\",\"costExcludes\":\"<p>费用不含：个人消费、餐食、保暖装备租赁</p>\",\"costIncludes\":\"<p>费用包含：用车、住宿、导游服务</p>\",\"createTime\":\"2026-04-25 21:01:16\",\"groupId\":4,\"highlights\":\"<p>亮点： - 极寒体验与打卡 - 星空摄影氛围感 - 北极村地标合影</p>\",\"id\":4,\"imagesJson\":\"[{\\\"path\\\":\\\"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1200&q=80\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":1},{\\\"path\\\":\\\"https://images.unsplash.com/photo-1459478309853-2c33a60058e7?auto=format&fit=crop&w=1200&q=80\\\",\\\"alt\\\":\\\"\\\",\\\"sort\\\":2}]\",\"itineraryText\":\"<p><strong>行程概览</strong></p><p>D1 抵达漠河</p><p>D2 北极村深度</p><p>D3 返程</p>\",\"params\":{},\"status\":\"0\",\"updateTime\":\"2026-04-25 21:01:16\"},\"group\":{\"coverImage\":\"https://images.unsplash.com/photo-1459478309853-2c33a60058e7?auto=format&fit=crop&w=1200&q=80\",\"createTime\":\"2026-04-25 21:01:16\",\"days\":3,\"departureCity\":\"哈尔滨\",\"destinationCity\":\"漠河\",\"groupCode\":\"TG-TEST-004\",\"id\":4,\"minPrice\":2199,\"nights\":2,\"params\":{},\"sortOrder\":40,\"status\":\"0\",\"subTitle\":\"北纬53°｜极寒体验｜星空摄影\",\"tags\":\"漠河,北极村,摄影\",\"title\":\"漠河-北极村 3天2晚极光追光团\",\"updateTime\":\"2026-04-25 21:01:16\"}}','{\"msg\":\"操作成功\",\"code\":200}',0,NULL,'2026-04-26 14:35:06',42);
 /*!40000 ALTER TABLE `sys_oper_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -691,7 +866,7 @@ CREATE TABLE `sys_user` (
 
 LOCK TABLES `sys_user` WRITE;
 /*!40000 ALTER TABLE `sys_user` DISABLE KEYS */;
-INSERT INTO `sys_user` VALUES (1,103,'admin','若依','00','ry@163.com','15888888888','1','','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','0','0','127.0.0.1','2026-04-25 22:18:03','admin','2026-04-25 10:31:31','','2026-04-25 22:18:02','管理员'),(2,105,'ry','若依','00','ry@qq.com','15666666666','1','','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','0','0','127.0.0.1','2026-04-25 10:31:31','admin','2026-04-25 10:31:31','',NULL,'测试员'),(100,NULL,'23033112','23033112','00','','','0','','$2a$10$d9zlSVUYOBfBRvj30uob/.mVoYx4ggJhQ/bLH/JqPMcuiS4py0Ynu','0','0','127.0.0.1','2026-04-25 21:21:14','','2026-04-25 11:36:07','','2026-04-25 21:21:14',NULL),(101,NULL,'23033101','23033101','00','','','0','','$2a$10$ARN.V0tCcxJfZAyGZaiCsOk0U3qOKodsSxvOLQfHMBV/5.Eg12VgC','0','0','',NULL,'','2026-04-25 20:13:12','',NULL,NULL);
+INSERT INTO `sys_user` VALUES (1,103,'admin','若依','00','ry@163.com','15888888888','1','','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','0','0','127.0.0.1','2026-04-26 16:17:31','admin','2026-04-25 10:31:31','','2026-04-26 16:17:31','管理员'),(2,105,'ry','若依','00','ry@qq.com','15666666666','1','','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','0','0','127.0.0.1','2026-04-25 10:31:31','admin','2026-04-25 10:31:31','',NULL,'测试员'),(100,NULL,'23033112','23033112','00','','','0','','$2a$10$d9zlSVUYOBfBRvj30uob/.mVoYx4ggJhQ/bLH/JqPMcuiS4py0Ynu','0','0','127.0.0.1','2026-04-26 15:32:41','','2026-04-25 11:36:07','','2026-04-26 15:32:40',NULL),(101,NULL,'23033101','23033101','00','','','0','','$2a$10$ARN.V0tCcxJfZAyGZaiCsOk0U3qOKodsSxvOLQfHMBV/5.Eg12VgC','0','0','',NULL,'','2026-04-25 20:13:12','',NULL,NULL);
 /*!40000 ALTER TABLE `sys_user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -774,7 +949,7 @@ CREATE TABLE `tour_group_details` (
 
 LOCK TABLES `tour_group_details` WRITE;
 /*!40000 ALTER TABLE `tour_group_details` DISABLE KEYS */;
-INSERT INTO `tour_group_details` VALUES (1,1,'亮点：\n- 经典冰雪线路，一次打卡多地\n- 赠送滑雪体验（以当天雪场开放为准）\n- 夜游雪乡（天气/交通可能调整）','<p><strong>行程概览</strong></p><p>D1 抵达后自由活动</p><p>D2 哈尔滨市区/冰雪主题景点</p><p>D3 雪乡全天</p><p>D4 亚布力滑雪</p><p>D5 返程</p>','<p>费用包含：车辆、酒店、导游服务、部分门票（以出团通知为准）</p>','<p>费用不含：个人消费、单房差、部分景区内小交通</p>','<p>预订须知：请携带有效证件；冬季注意保暖；如遇极端天气可能调整行程。</p>','[{\"alt\": \"雪乡夜景\", \"path\": \"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}, {\"alt\": \"滑雪体验\", \"path\": \"https://images.unsplash.com/photo-1542704792-e30dac463c90?auto=format&fit=crop&w=1200&q=80\", \"sort\": 2}, {\"alt\": \"冬季林海\", \"path\": \"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80\", \"sort\": 3}]','0','2026-04-25 21:01:16','2026-04-25 21:01:16'),(2,2,'亮点：\n- 小团慢游，节奏更舒适\n- 温泉放松+雾凇观赏\n- 酒店升级（以实际库存为准）','<p><strong>行程概览</strong></p><p>D1 集合出发</p><p>D2 长白山景区</p><p>D3 温泉/雾凇</p><p>D4 返程</p>','<p>费用包含：用车、酒店、导游/司兼导、基础保险</p>','<p>费用不含：个人消费、餐食（若未包含）、部分二消项目</p>','<p>预订须知：如需泡温泉请自备泳衣；高海拔/低温请注意身体状况。</p>','[{\"alt\": \"森林雪景\", \"path\": \"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}, {\"alt\": \"雾凇\", \"path\": \"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80\", \"sort\": 2}]','0','2026-04-25 21:01:16','2026-04-25 21:01:16'),(3,3,'亮点：\n- 历史人文讲解更深入\n- 轻松行程，适合亲子/长辈\n- 城市美食自由探索','<p><strong>行程概览</strong></p><p>D1 沈阳历史文化</p><p>D2 前往丹东+江景</p><p>D3 返程</p>','<p>费用包含：用车、住宿、导游服务</p>','<p>费用不含：餐食、个人消费、部分门票</p>','<p>预订须知：部分场馆需提前预约；请遵守当地参观规定。</p>','[{\"alt\": \"城市建筑\", \"path\": \"https://images.unsplash.com/photo-1526481280695-3c687fd643ed?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}]','0','2026-04-25 21:01:16','2026-04-25 21:01:16'),(4,4,'亮点：\n- 极寒体验与打卡\n- 星空摄影氛围感\n- 北极村地标合影','<p><strong>行程概览</strong></p><p>D1 抵达漠河</p><p>D2 北极村深度</p><p>D3 返程</p>','<p>费用包含：用车、住宿、导游服务</p>','<p>费用不含：个人消费、餐食、保暖装备租赁</p>','<p>预订须知：极寒环境请做好保暖；部分体验受天气影响。</p>','[{\"alt\": \"极寒雪景\", \"path\": \"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}, {\"alt\": \"星空\", \"path\": \"https://images.unsplash.com/photo-1459478309853-2c33a60058e7?auto=format&fit=crop&w=1200&q=80\", \"sort\": 2}]','0','2026-04-25 21:01:16','2026-04-25 21:01:16');
+INSERT INTO `tour_group_details` VALUES (1,1,'<p>亮点： - 经典冰雪线路，一次打卡多地 - 赠送滑雪体验（以当天雪场开放为准） - 夜游雪乡（天气/交通可能调整）</p>','<p><strong>行程概览</strong></p><p>D1 抵达后自由活动</p><p>D2 哈尔滨市区/冰雪主题景点</p><p>D3 雪乡全天</p><p>D4 亚布力滑雪</p><p>D5 返程</p>','<p>费用包含：车辆、酒店、导游服务、部分门票（以出团通知为准）</p>','<p>费用不含：个人消费、单房差、部分景区内小交通</p>','<p>预订须知：请携带有效证件；冬季注意保暖；如遇极端天气可能调整行程。</p>','[{\"alt\": \"\", \"path\": \"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}, {\"alt\": \"\", \"path\": \"https://images.unsplash.com/photo-1542704792-e30dac463c90?auto=format&fit=crop&w=1200&q=80\", \"sort\": 2}, {\"alt\": \"\", \"path\": \"/profile/upload/2026/04/25/pexels-andyhvu-3244513_20260425223556A001.jpg\", \"sort\": 3}]','0','2026-04-25 21:01:16','2026-04-25 22:36:02'),(2,2,'<p>亮点： - 小团慢游，节奏更舒适 - 温泉放松+雾凇观赏 - 酒店升级（以实际库存为准）</p>','<p><strong>行程概览</strong></p><p>D1 集合出发</p><p>D2 长白山景区</p><p>D3 温泉/雾凇</p><p>D4 返程</p>','<p>费用包含：用车、酒店、导游/司兼导、基础保险</p>','<p>费用不含：个人消费、餐食（若未包含）、部分二消项目</p>','<p>预订须知：如需泡温泉请自备泳衣；高海拔/低温请注意身体状况。</p>','[{\"alt\": \"\", \"path\": \"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}, {\"alt\": \"\", \"path\": \"https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80\", \"sort\": 2}]','0','2026-04-25 21:01:16','2026-04-26 14:34:18'),(3,3,'<p>亮点： - 历史人文讲解更深入 - 轻松行程，适合亲子/长辈 - 城市美食自由探索</p>','<p><strong>行程概览</strong></p><p>D1 沈阳历史文化</p><p>D2 前往丹东+江景</p><p>D3 返程</p>','<p>费用包含：用车、住宿、导游服务</p>','<p>费用不含：餐食、个人消费、部分门票</p>','<p>预订须知：部分场馆需提前预约；请遵守当地参观规定。</p>','[{\"alt\": \"\", \"path\": \"/profile/upload/2026/04/25/屏幕截图 2026-04-25 225616_20260425225638A003.png\", \"sort\": 1}]','0','2026-04-25 21:01:16','2026-04-25 22:57:15'),(4,4,'<p>亮点： - 极寒体验与打卡 - 星空摄影氛围感 - 北极村地标合影</p>','<p><strong>行程概览</strong></p><p>D1 抵达漠河</p><p>D2 北极村深度</p><p>D3 返程</p>','<p>费用包含：用车、住宿、导游服务</p>','<p>费用不含：个人消费、餐食、保暖装备租赁</p>','<p>预订须知：极寒环境请做好保暖；部分体验受天气影响。</p>','[{\"alt\": \"\", \"path\": \"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1200&q=80\", \"sort\": 1}, {\"alt\": \"\", \"path\": \"https://images.unsplash.com/photo-1459478309853-2c33a60058e7?auto=format&fit=crop&w=1200&q=80\", \"sort\": 2}]','0','2026-04-25 21:01:16','2026-04-26 14:35:06');
 /*!40000 ALTER TABLE `tour_group_details` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -814,7 +989,7 @@ CREATE TABLE `tour_groups` (
 
 LOCK TABLES `tour_groups` WRITE;
 /*!40000 ALTER TABLE `tour_groups` DISABLE KEYS */;
-INSERT INTO `tour_groups` VALUES (1,'TG-TEST-001','哈尔滨-雪乡-亚布力 5天4晚跟团游','冰雪王国经典路线｜滑雪+雪乡夜景','哈尔滨','雪乡',5,4,2699.00,'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80','雪乡,滑雪,冰雪大世界',10,'0','2026-04-25 21:01:16','2026-04-25 21:01:16'),(2,'TG-TEST-002','长白山-雾凇岛 4天3晚轻奢小团','温泉+雾凇｜酒店升级｜2-6人小团','长春','长白山',4,3,3299.00,'https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1200&q=80','长白山,温泉,雾凇',20,'0','2026-04-25 21:01:16','2026-04-25 21:01:16'),(3,'TG-TEST-003','沈阳-丹东 3天2晚历史人文之旅','故宫博物院｜鸭绿江断桥｜人文讲解','沈阳','丹东',3,2,1599.00,'https://images.unsplash.com/photo-1543349689-9a4d426bee8e?auto=format&fit=crop&w=1200&q=80','历史,人文,小众',30,'0','2026-04-25 21:01:16','2026-04-25 21:01:16'),(4,'TG-TEST-004','漠河-北极村 3天2晚极光追光团','北纬53°｜极寒体验｜星空摄影','哈尔滨','漠河',3,2,2199.00,'https://images.unsplash.com/photo-1459478309853-2c33a60058e7?auto=format&fit=crop&w=1200&q=80','漠河,北极村,摄影',40,'1','2026-04-25 21:01:16','2026-04-25 21:01:16');
+INSERT INTO `tour_groups` VALUES (1,'TG-TEST-001','哈尔滨-雪乡-亚布力 5天4晚跟团游','冰雪王国经典路线｜滑雪+雪乡夜景','哈尔滨','雪乡',5,4,2699.00,'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80','雪乡,滑雪,冰雪大世界',10,'0','2026-04-25 21:01:16','2026-04-25 22:36:02'),(2,'TG-TEST-002','长白山-雾凇岛 4天3晚轻奢小团','温泉+雾凇｜酒店升级｜2-6人小团','长春','长白山',4,3,3299.00,'https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?auto=format&fit=crop&w=1200&q=80','长白山,温泉,雾凇',20,'0','2026-04-25 21:01:16','2026-04-26 14:34:18'),(3,'TG-TEST-003','沈阳-丹东 3天2晚历史人文之旅','故宫博物院｜鸭绿江断桥｜人文讲解','沈阳','丹东',3,2,1599.00,'/profile/upload/2026/04/25/屏幕截图 2026-04-25 225616_20260425225711A004.png','历史,人文,小众',30,'0','2026-04-25 21:01:16','2026-04-25 22:57:15'),(4,'TG-TEST-004','漠河-北极村 3天2晚极光追光团','北纬53°｜极寒体验｜星空摄影','哈尔滨','漠河',3,2,2199.00,'https://images.unsplash.com/photo-1459478309853-2c33a60058e7?auto=format&fit=crop&w=1200&q=80','漠河,北极村,摄影',40,'0','2026-04-25 21:01:16','2026-04-26 14:35:06');
 /*!40000 ALTER TABLE `tour_groups` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -827,4 +1002,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-25 22:33:12
+-- Dump completed on 2026-04-26 17:29:20

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.order.mapper.OrderItemMapper">
+
+    <resultMap type="com.snow.business.order.domain.OrderItem" id="OrderItemResult">
+        <id     property="id"          column="id"           />
+        <result property="orderId"     column="order_id"     />
+        <result property="orderNo"     column="order_no"     />
+        <result property="userId"      column="user_id"      />
+        <result property="productId"   column="product_id"   />
+        <result property="productCode" column="product_code" />
+        <result property="productTitle" column="product_title" />
+        <result property="productImage" column="product_image" />
+        <result property="skuText"     column="sku_text"     />
+        <result property="unitPrice"   column="unit_price"   />
+        <result property="quantity"    column="quantity"     />
+        <result property="itemAmount"  column="item_amount"  />
+        <result property="createTime"  column="create_time"  />
+        <result property="updateTime"  column="update_time"  />
+    </resultMap>
+
+    <insert id="insertOrderItems">
+        insert into order_item (
+            order_id, order_no, user_id, product_id, product_code, product_title,
+            product_image, sku_text, unit_price, quantity
+        ) values
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.orderId}, #{item.orderNo}, #{item.userId}, #{item.productId}, #{item.productCode}, #{item.productTitle},
+            #{item.productImage}, #{item.skuText}, #{item.unitPrice}, #{item.quantity}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectOrderItemListByOrderNo" resultMap="OrderItemResult">
+        select id, order_id, order_no, user_id, product_id, product_code, product_title,
+               product_image, sku_text, unit_price, quantity, item_amount, create_time, update_time
+          from order_item
+         where order_no = #{orderNo}
+         order by id asc
+    </select>
+</mapper>

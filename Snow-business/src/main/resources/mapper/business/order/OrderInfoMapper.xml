@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.order.mapper.OrderInfoMapper">
+
+    <resultMap type="com.snow.business.order.domain.OrderInfo" id="OrderInfoResult">
+        <id     property="id"              column="id"               />
+        <result property="orderNo"         column="order_no"         />
+        <result property="userId"          column="user_id"          />
+        <result property="orderStatus"     column="order_status"     />
+        <result property="payStatus"       column="pay_status"       />
+        <result property="totalAmount"     column="total_amount"     />
+        <result property="payAmount"       column="pay_amount"       />
+        <result property="receiverName"    column="receiver_name"    />
+        <result property="receiverPhone"   column="receiver_phone"   />
+        <result property="receiverAddress" column="receiver_address" />
+        <result property="remark"          column="remark"           />
+        <result property="createTime"      column="create_time"      />
+        <result property="updateTime"      column="update_time"      />
+    </resultMap>
+
+    <sql id="selectOrderInfoVo">
+        select id, order_no, user_id, order_status, pay_status, total_amount, pay_amount,
+               receiver_name, receiver_phone, receiver_address, remark, create_time, update_time
+          from orders
+    </sql>
+
+    <select id="selectOrderById" resultMap="OrderInfoResult">
+        <include refid="selectOrderInfoVo"/>
+        where id = #{id}
+        limit 1
+    </select>
+
+    <select id="selectOrderByOrderNo" resultMap="OrderInfoResult">
+        <include refid="selectOrderInfoVo"/>
+        where order_no = #{orderNo}
+        limit 1
+    </select>
+
+    <select id="selectOrderByOrderNoAndUserId" resultMap="OrderInfoResult">
+        <include refid="selectOrderInfoVo"/>
+        where order_no = #{orderNo}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectOrderList" parameterType="com.snow.business.order.domain.OrderInfo" resultMap="OrderInfoResult">
+        <include refid="selectOrderInfoVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                and order_no = #{orderNo}
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and order_status = #{orderStatus}
+            </if>
+            <if test="payStatus != null and payStatus != ''">
+                and pay_status = #{payStatus}
+            </if>
+        </where>
+        order by create_time desc, id desc
+    </select>
+
+    <insert id="insertOrder" parameterType="com.snow.business.order.domain.OrderInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into orders (
+            order_no, user_id, order_status, pay_status, total_amount, pay_amount,
+            receiver_name, receiver_phone, receiver_address, remark
+        ) values (
+            #{orderNo}, #{userId}, #{orderStatus}, #{payStatus}, #{totalAmount}, #{payAmount},
+            #{receiverName}, #{receiverPhone}, #{receiverAddress}, #{remark}
+        )
+    </insert>
+
+    <update id="updateOrderStatus">
+        update orders
+        <set>
+            order_status = #{toStatus},
+            <if test="payStatus != null">
+                pay_status = #{payStatus},
+            </if>
+            <if test="toStatus == '1'">
+                pay_time = sysdate(),
+            </if>
+            <if test="toStatus == '2'">
+                cancel_time = sysdate(),
+            </if>
+            <if test="toStatus == '3'">
+                ship_time = sysdate(),
+            </if>
+            <if test="toStatus == '4'">
+                finish_time = sysdate(),
+            </if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+          and order_status = #{fromStatus}
+    </update>
+
+    <update id="cancelTimeoutOrders">
+        update orders
+        set order_status = '2',
+            cancel_time = sysdate(),
+            update_time = sysdate()
+        where order_status = '0'
+          and pay_status = '0'
+          and create_time <![CDATA[<=]]> DATE_SUB(now(), interval #{timeoutMinutes} minute)
+        limit #{limit}
+    </update>
+</mapper>
