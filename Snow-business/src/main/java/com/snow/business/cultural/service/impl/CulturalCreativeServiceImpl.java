@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.snow.business.cultural.domain.CulturalCreativeComment;
 import com.snow.business.cultural.domain.CulturalCreativeProduct;
 import com.snow.business.cultural.mapper.CulturalCreativeCommentMapper;
@@ -47,5 +48,26 @@ public class CulturalCreativeServiceImpl implements ICulturalCreativeService
         data.put("product", selectCulturalCreativeProductById(productId));
         data.put("comments", culturalCreativeCommentMapper.selectCulturalCreativeCommentList(q));
         return data;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int insertCulturalCreativeProduct(CulturalCreativeProduct product)
+    {
+        return culturalCreativeProductMapper.insertCulturalCreativeProduct(product);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int updateCulturalCreativeProduct(CulturalCreativeProduct product)
+    {
+        return culturalCreativeProductMapper.updateCulturalCreativeProduct(product);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteCulturalCreativeProductByIds(Long[] ids)
+    {
+        return culturalCreativeProductMapper.deleteCulturalCreativeProductByIds(ids);
     }
 }

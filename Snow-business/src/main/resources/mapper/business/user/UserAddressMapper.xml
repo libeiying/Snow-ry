@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.user.mapper.UserAddressMapper">
+
+    <resultMap id="UserAddressResult" type="com.snow.business.user.domain.UserAddress">
+        <id property="addressId" column="address_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="receiverName" column="receiver_name"/>
+        <result property="receiverPhone" column="receiver_phone"/>
+        <result property="provinceCode" column="province_code"/>
+        <result property="provinceName" column="province_name"/>
+        <result property="cityCode" column="city_code"/>
+        <result property="cityName" column="city_name"/>
+        <result property="districtCode" column="district_code"/>
+        <result property="districtName" column="district_name"/>
+        <result property="detailAddress" column="detail_address"/>
+        <result property="postalCode" column="postal_code"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="addressStatus" column="address_status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectAddressVo">
+        select address_id, user_id, receiver_name, receiver_phone, province_code, province_name,
+               city_code, city_name, district_code, district_name, detail_address, postal_code,
+               is_default, address_status, create_time, update_time, remark
+          from snow_address
+    </sql>
+
+    <select id="selectAddressListByUserId" resultMap="UserAddressResult">
+        <include refid="selectAddressVo"/>
+        where user_id = #{userId}
+          and address_status = '0'
+        order by is_default desc, update_time desc, address_id desc
+    </select>
+
+    <select id="selectAddressByIdAndUserId" resultMap="UserAddressResult">
+        <include refid="selectAddressVo"/>
+        where address_id = #{addressId}
+          and user_id = #{userId}
+        limit 1
+    </select>
+
+    <select id="selectDefaultAddressByUserId" resultMap="UserAddressResult">
+        <include refid="selectAddressVo"/>
+        where user_id = #{userId}
+          and address_status = '0'
+          and is_default = 'Y'
+        order by update_time desc, address_id desc
+        limit 1
+    </select>
+
+    <insert id="insertAddress" parameterType="com.snow.business.user.domain.UserAddress" useGeneratedKeys="true" keyProperty="addressId">
+        insert into snow_address (
+            user_id, receiver_name, receiver_phone, province_code, province_name,
+            city_code, city_name, district_code, district_name, detail_address, postal_code,
+            is_default, address_status, remark
+        ) values (
+            #{userId}, #{receiverName}, #{receiverPhone}, #{provinceCode}, #{provinceName},
+            #{cityCode}, #{cityName}, #{districtCode}, #{districtName}, #{detailAddress}, #{postalCode},
+            #{isDefault}, #{addressStatus}, #{remark}
+        )
+    </insert>
+
+    <update id="updateAddress" parameterType="com.snow.business.user.domain.UserAddress">
+        update snow_address
+        <set>
+            receiver_name = #{receiverName},
+            receiver_phone = #{receiverPhone},
+            province_code = #{provinceCode},
+            province_name = #{provinceName},
+            city_code = #{cityCode},
+            city_name = #{cityName},
+            district_code = #{districtCode},
+            district_name = #{districtName},
+            detail_address = #{detailAddress},
+            postal_code = #{postalCode},
+            is_default = #{isDefault},
+            address_status = #{addressStatus},
+            remark = #{remark},
+            update_time = sysdate()
+        </set>
+        where address_id = #{addressId}
+          and user_id = #{userId}
+    </update>
+
+    <update id="clearDefaultByUserId">
+        update snow_address
+           set is_default = 'N',
+               update_time = sysdate()
+         where user_id = #{userId}
+           and address_status = '0'
+           and is_default = 'Y'
+    </update>
+
+    <update id="setDefaultById">
+        update snow_address
+           set is_default = 'Y',
+               update_time = sysdate()
+         where address_id = #{addressId}
+           and user_id = #{userId}
+           and address_status = '0'
+    </update>
+
+    <delete id="deleteAddressById">
+        delete from snow_address
+         where address_id = #{addressId}
+           and user_id = #{userId}
+    </delete>
+</mapper>

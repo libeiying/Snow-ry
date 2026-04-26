@@ -3,6 +3,7 @@ package com.snow.web.controller.business;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,16 +12,20 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.snow.common.annotation.Anonymous;
 import com.snow.business.cart.domain.ShoppingCart;
 import com.snow.business.cart.service.IShoppingCartService;
 import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
+import com.snow.common.core.domain.model.LoginUser;
 import com.snow.common.exception.ServiceException;
+import com.snow.common.utils.SecurityUtils;
 
 /**
  * 用户端购物车接口
  */
 @RestController
+@Anonymous
 @RequestMapping("/app/cart")
 public class ShoppingCartController extends BaseController
 {
@@ -33,7 +38,7 @@ public class ShoppingCartController extends BaseController
     @GetMapping("/list")
     public AjaxResult list()
     {
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         List<ShoppingCart> list = shoppingCartService.selectShoppingCartListByUserId(userId);
         return success(list);
     }
@@ -44,7 +49,7 @@ public class ShoppingCartController extends BaseController
     @GetMapping("/summary")
     public AjaxResult summary()
     {
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         Map<String, Object> data = shoppingCartService.selectCartSummary(userId);
         return success(data);
     }
@@ -59,7 +64,7 @@ public class ShoppingCartController extends BaseController
         {
             throw new ServiceException("productId不能为空");
         }
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.addItem(userId, req.getProductId(), req.getQuantity()));
     }
 
@@ -73,7 +78,7 @@ public class ShoppingCartController extends BaseController
         {
             throw new ServiceException("isChecked不能为空");
         }
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.updateItemChecked(userId, id, req.getIsChecked()));
     }
 
@@ -87,7 +92,7 @@ public class ShoppingCartController extends BaseController
         {
             throw new ServiceException("isChecked不能为空");
         }
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.updateAllChecked(userId, req.getIsChecked()));
     }
 
@@ -101,7 +106,7 @@ public class ShoppingCartController extends BaseController
         {
             throw new ServiceException("quantity不能为空");
         }
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.updateItemQuantity(userId, id, req.getQuantity()));
     }
 
@@ -111,7 +116,7 @@ public class ShoppingCartController extends BaseController
     @DeleteMapping("/{id}")
     public AjaxResult remove(@PathVariable("id") Long id)
     {
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.deleteItem(userId, id));
     }
 
@@ -121,7 +126,7 @@ public class ShoppingCartController extends BaseController
     @DeleteMapping("/checked")
     public AjaxResult removeChecked()
     {
-        Long userId = getUserId();
+        Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.deleteCheckedItems(userId));
     }
 
@@ -179,5 +184,20 @@ public class ShoppingCartController extends BaseController
         {
             this.quantity = quantity;
         }
+    }
+
+    private Long getCurrentUserIdOrGuest()
+    {
+        Authentication authentication = SecurityUtils.getAuthentication();
+        if (authentication == null)
+        {
+            return 0L;
+        }
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof LoginUser))
+        {
+            return 0L;
+        }
+        return ((LoginUser) principal).getUserId();
     }
 }

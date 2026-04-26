@@ -14,4 +14,10 @@ public interface ICulturalCreativeService
     public List<CulturalCreativeProduct> selectCulturalCreativeProductList(CulturalCreativeProduct product);
 
     public Map<String, Object> selectCulturalCreativeFull(Long productId);
+
+    public int insertCulturalCreativeProduct(CulturalCreativeProduct product);
+
+    public int updateCulturalCreativeProduct(CulturalCreativeProduct product);
+
+    public int deleteCulturalCreativeProductByIds(Long[] ids);
 }

@@ -112,6 +112,8 @@ public class SecurityConfig
                 permitAllUrl.getUrls().forEach(url -> requests.antMatchers(url).permitAll());
                 // 对于登录login 注册register 验证码captchaImage 允许匿名访问
                 requests.antMatchers("/login", "/register", "/captchaImage").permitAll()
+                    // 用户端接口统一放行（如 /app/user、/app/cart、/app/order 等）
+                    .antMatchers("/app/**").permitAll()
                     // 兼容前端使用 /dev-api 前缀的用户端旅游团查询接口
                     .antMatchers(HttpMethod.GET, "/dev-api/tour/groups/**").permitAll()
                     // 直连后端（无 /dev-api 前缀）的用户端旅游团查询接口

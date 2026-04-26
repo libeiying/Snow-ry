@@ -1,6 +1,7 @@
 package com.snow.business.cultural.domain;
 
 import java.math.BigDecimal;
+import com.snow.common.annotation.Excel;
 import com.snow.common.core.domain.BaseEntity;
 
 /**
@@ -11,22 +12,31 @@ public class CulturalCreativeProduct extends BaseEntity
     private static final long serialVersionUID = 1L;
 
     private Long id;
+    @Excel(name = "商品编码")
     private String productCode;
+    @Excel(name = "商品名称")
     private String title;
     private String subTitle;
     private String categoryCode;
+    @Excel(name = "分类")
     private String categoryName;
+    @Excel(name = "售价")
     private BigDecimal price;
     private BigDecimal marketPrice;
+    @Excel(name = "库存")
     private Integer stock;
+    @Excel(name = "销量")
     private Integer salesCount;
     private String coverImage;
     private String imagesJson;
     private String specJson;
     private String serviceJson;
+    @Excel(name = "评论数")
     private Integer reviewCount;
+    @Excel(name = "评分")
     private BigDecimal reviewScore;
     private Integer sortOrder;
+    @Excel(name = "状态", readConverterExp = "0=正常,1=停用")
     private String status;
 
     public Long getId()

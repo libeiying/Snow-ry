@@ -1,5 +1,7 @@
 package com.snow.framework.web.service;
 
+import com.snow.system.domain.SysUserRole;
+import com.snow.system.mapper.SysUserRoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.snow.common.constant.CacheConstants;
@@ -18,6 +20,8 @@ import com.snow.framework.manager.factory.AsyncFactory;
 import com.snow.system.service.ISysConfigService;
 import com.snow.system.service.ISysUserService;
 
+import java.util.List;
+
 /**
  * 注册校验方法
  * 
@@ -34,6 +38,10 @@ public class SysRegisterService
 
     @Autowired
     private RedisCache redisCache;
+
+
+    @Autowired
+    private SysUserRoleMapper userRoleMapper;
 
     /**
      * 注册
@@ -84,6 +92,13 @@ public class SysRegisterService
             }
             else
             {
+                //改为默认注册为普通用户
+                List<SysUserRole> userRoleList = new java.util.ArrayList<SysUserRole>();
+                SysUserRole userRole = new SysUserRole();
+                userRole.setUserId(sysUser.getUserId());
+                userRole.setRoleId(2L);
+                userRoleList.add(userRole);
+                userRoleMapper.batchUserRole(userRoleList);
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.REGISTER, MessageUtils.message("user.register.success")));
             }
         }

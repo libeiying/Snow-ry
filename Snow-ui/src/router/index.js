@@ -175,6 +175,48 @@ export const dynamicRoutes = [
         meta: { title: '旅游团详情', activeMenu: '/travel/tourGroup' }
       }
     ]
+  },
+  {
+    path: '/business/cultural-creative-detail',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:culturalCreative:query'],
+    children: [
+      {
+        path: 'index/:id(\\d+)',
+        component: () => import('@/views/business/culturalCreative/detail'),
+        name: 'CulturalCreativeDetail',
+        meta: { title: '文创商品详情', activeMenu: '/goods/culturalCreative' }
+      }
+    ]
+  },
+  {
+    path: '/business/cultural-creative-edit',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:culturalCreative:add'],
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/business/culturalCreative/edit'),
+        name: 'CulturalCreativeAdd',
+        meta: { title: '新增文创商品', activeMenu: '/goods/culturalCreative' }
+      }
+    ]
+  },
+  {
+    path: '/business/cultural-creative-edit',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:culturalCreative:edit'],
+    children: [
+      {
+        path: 'index/:id(\\d+)',
+        component: () => import('@/views/business/culturalCreative/edit'),
+        name: 'CulturalCreativeEdit',
+        meta: { title: '修改文创商品', activeMenu: '/goods/culturalCreative' }
+      }
+    ]
   }
 ]
 

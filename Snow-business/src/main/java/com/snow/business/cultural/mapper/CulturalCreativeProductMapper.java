@@ -11,4 +11,10 @@ public interface CulturalCreativeProductMapper
     public CulturalCreativeProduct selectCulturalCreativeProductById(Long id);
 
     public List<CulturalCreativeProduct> selectCulturalCreativeProductList(CulturalCreativeProduct product);
+
+    public int insertCulturalCreativeProduct(CulturalCreativeProduct product);
+
+    public int updateCulturalCreativeProduct(CulturalCreativeProduct product);
+
+    public int deleteCulturalCreativeProductByIds(Long[] ids);
 }

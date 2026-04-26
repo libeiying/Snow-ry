@@ -3,6 +3,7 @@ package com.snow.web.controller.business;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,12 +16,15 @@ import com.snow.business.order.service.IOrderService;
 import com.snow.common.annotation.Anonymous;
 import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
+import com.snow.common.core.domain.model.LoginUser;
 import com.snow.common.exception.ServiceException;
+import com.snow.common.utils.SecurityUtils;
 
 /**
  * 用户端订单接口
  */
 @RestController
+@Anonymous
 @RequestMapping("/app/order")
 public class AppOrderController extends BaseController
 {
@@ -30,14 +34,14 @@ public class AppOrderController extends BaseController
     @GetMapping("/list")
     public AjaxResult list()
     {
-        List<OrderInfo> list = orderService.selectOrderListByUserId(getUserId());
+        List<OrderInfo> list = orderService.selectOrderListByUserId(getCurrentUserIdOrGuest());
         return success(list);
     }
 
     @GetMapping("/{orderNo}")
     public AjaxResult detail(@PathVariable("orderNo") String orderNo)
     {
-        Map<String, Object> data = orderService.selectOrderDetailByOrderNo(orderNo, getUserId(), true);
+        Map<String, Object> data = orderService.selectOrderDetailByOrderNo(orderNo, getCurrentUserIdOrGuest(), true);
         return success(data);
     }
 
@@ -48,7 +52,7 @@ public class AppOrderController extends BaseController
         {
             throw new ServiceException("请求参数不能为空");
         }
-        String orderNo = orderService.submitOrder(getUserId(), req.getReceiverName(), req.getReceiverPhone(), req.getReceiverAddress(), req.getRemark());
+        String orderNo = orderService.submitOrder(getCurrentUserIdOrGuest(), req.getReceiverName(), req.getReceiverPhone(), req.getReceiverAddress(), req.getRemark());
         AjaxResult ajax = success();
         ajax.put("orderNo", orderNo);
         return ajax;
@@ -57,13 +61,13 @@ public class AppOrderController extends BaseController
     @PutMapping("/{orderNo}/cancel")
     public AjaxResult cancel(@PathVariable("orderNo") String orderNo)
     {
-        return toAjax(orderService.cancelOrder(orderNo, getUserId()));
+        return toAjax(orderService.cancelOrder(orderNo, getCurrentUserIdOrGuest()));
     }
 
     @PutMapping("/{orderNo}/finish")
     public AjaxResult finish(@PathVariable("orderNo") String orderNo)
     {
-        return toAjax(orderService.finishOrder(orderNo, getUserId()));
+        return toAjax(orderService.finishOrder(orderNo, getCurrentUserIdOrGuest()));
     }
 
     /**
@@ -191,5 +195,20 @@ public class AppOrderController extends BaseController
         {
             this.callbackPayload = callbackPayload;
         }
+    }
+
+    private Long getCurrentUserIdOrGuest()
+    {
+        Authentication authentication = SecurityUtils.getAuthentication();
+        if (authentication == null)
+        {
+            return 0L;
+        }
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof LoginUser))
+        {
+            return 0L;
+        }
+        return ((LoginUser) principal).getUserId();
     }
 }

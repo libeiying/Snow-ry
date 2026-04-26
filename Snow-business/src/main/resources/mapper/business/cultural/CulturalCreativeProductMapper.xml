@@ -44,7 +44,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectCulturalCreativeProductVo"/>
         <where>
             <if test="productCode != null and productCode != ''">
-                and product_code = #{productCode}
+                and product_code like concat('%', #{productCode}, '%')
             </if>
             <if test="title != null and title != ''">
                 and title like concat('%', #{title}, '%')
@@ -52,10 +52,60 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="categoryCode != null and categoryCode != ''">
                 and category_code = #{categoryCode}
             </if>
+            <if test="categoryName != null and categoryName != ''">
+                and category_name like concat('%', #{categoryName}, '%')
+            </if>
             <if test="status != null and status != ''">
                 and status = #{status}
             </if>
         </where>
         order by sort_order asc, update_time desc
     </select>
+
+    <insert id="insertCulturalCreativeProduct" parameterType="com.snow.business.cultural.domain.CulturalCreativeProduct" useGeneratedKeys="true" keyProperty="id">
+        insert into cultural_creative_products(
+            product_code, title, sub_title, category_code, category_name, price, market_price,
+            stock, sales_count, cover_image, images_json, spec_json, service_json,
+            review_count, review_score, sort_order, status, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{productCode}, #{title}, #{subTitle}, #{categoryCode}, #{categoryName}, #{price}, #{marketPrice},
+            #{stock}, #{salesCount}, #{coverImage}, #{imagesJson}, #{specJson}, #{serviceJson},
+            #{reviewCount}, #{reviewScore}, #{sortOrder}, #{status}, #{createBy}, sysdate(), #{updateBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateCulturalCreativeProduct" parameterType="com.snow.business.cultural.domain.CulturalCreativeProduct">
+        update cultural_creative_products
+        <set>
+            <if test="productCode != null">product_code = #{productCode},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="subTitle != null">sub_title = #{subTitle},</if>
+            <if test="categoryCode != null">category_code = #{categoryCode},</if>
+            <if test="categoryName != null">category_name = #{categoryName},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="marketPrice != null">market_price = #{marketPrice},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="salesCount != null">sales_count = #{salesCount},</if>
+            <if test="coverImage != null">cover_image = #{coverImage},</if>
+            <if test="imagesJson != null">images_json = #{imagesJson},</if>
+            <if test="specJson != null">spec_json = #{specJson},</if>
+            <if test="serviceJson != null">service_json = #{serviceJson},</if>
+            <if test="reviewCount != null">review_count = #{reviewCount},</if>
+            <if test="reviewScore != null">review_score = #{reviewScore},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteCulturalCreativeProductByIds" parameterType="Long">
+        delete from cultural_creative_products
+        where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
 </mapper>
