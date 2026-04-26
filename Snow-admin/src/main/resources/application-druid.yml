@@ -1,14 +1,16 @@
 # 数据源配置
 spring:
+    config:
+        import: optional:classpath:application-druid-local.yml
     datasource:
         type: com.alibaba.druid.pool.DruidDataSource
         driverClassName: com.mysql.cj.jdbc.Driver
         druid:
             # 主库数据源
             master:
-                url: jdbc:mysql://localhost:3306/snow?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+                url: jdbc:mysql://${DB_HOST:}:${DB_PORT:}/snow?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
                 username: root
-                password: 259775
+                password: ${DB_PASSWORD:}
             # 从库数据源
             slave:
                 # 从数据源开关/默认关闭
