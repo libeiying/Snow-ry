@@ -48,3 +48,5 @@ nbdist/
 
 # Local secret config
 Snow-admin/src/main/resources/application-druid-local.yml
+Snow-admin/src/main/resources/application-local.yml
+Snow-admin/src/main/resources/application-prod.yml

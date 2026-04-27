@@ -1,0 +1,12 @@
+.git
+.idea
+.vscode
+**/target
+**/node_modules
+Snow-ui/dist
+*.log
+*.tmp
+*.swp
+*.bak
+sql
+agent-transcripts
