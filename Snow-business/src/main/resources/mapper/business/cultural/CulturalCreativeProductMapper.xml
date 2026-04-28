@@ -108,4 +108,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{id}
         </foreach>
     </delete>
+
+    <update id="recalculateReviewStats" parameterType="Long">
+        update cultural_creative_products p
+        set review_count = (
+                select count(*) from cultural_creative_comments c
+                where c.product_id = p.id and c.status = '0' and c.audit_status = '1'
+            ),
+            review_score = (
+                select ifnull(round(avg(c.score), 2), 5.00) from cultural_creative_comments c
+                where c.product_id = p.id and c.status = '0' and c.audit_status = '1'
+            ),
+            update_time = sysdate()
+        where p.id = #{id}
+    </update>
 </mapper>

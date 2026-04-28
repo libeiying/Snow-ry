@@ -43,4 +43,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
         order by create_time desc
     </select>
+
+    <insert id="insertCulturalCreativeComment" parameterType="com.snow.business.cultural.domain.CulturalCreativeComment" useGeneratedKeys="true" keyProperty="id">
+        insert into cultural_creative_comments (
+            product_id, user_id, user_nickname, user_avatar, is_anonymous,
+            score, content, images_json, like_count, status, audit_status,
+            create_time, update_time
+        ) values (
+            #{productId}, #{userId}, #{userNickname}, #{userAvatar}, #{isAnonymous},
+            #{score}, #{content}, #{imagesJson}, #{likeCount}, #{status}, #{auditStatus},
+            sysdate(), sysdate()
+        )
+    </insert>
 </mapper>

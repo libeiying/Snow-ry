@@ -9,4 +9,6 @@ import com.snow.business.cultural.domain.CulturalCreativeComment;
 public interface CulturalCreativeCommentMapper
 {
     public List<CulturalCreativeComment> selectCulturalCreativeCommentList(CulturalCreativeComment comment);
+
+    public int insertCulturalCreativeComment(CulturalCreativeComment comment);
 }
