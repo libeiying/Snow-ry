@@ -17,4 +17,9 @@ public interface CulturalCreativeProductMapper
     public int updateCulturalCreativeProduct(CulturalCreativeProduct product);
 
     public int deleteCulturalCreativeProductByIds(Long[] ids);
+
+    /**
+     * 按已通过评论重算 review_count、review_score
+     */
+    public int recalculateReviewStats(Long id);
 }
