@@ -3,6 +3,7 @@ package com.snow.web.controller.business;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.snow.common.annotation.Anonymous;
@@ -29,6 +31,9 @@ import com.snow.common.utils.SecurityUtils;
 @RequestMapping("/app/cart")
 public class ShoppingCartController extends BaseController
 {
+    @Value("${snow.ai.trade.secret:}")
+    private String aiTradeSecret;
+
     @Autowired
     private IShoppingCartService shoppingCartService;
 
@@ -66,6 +71,20 @@ public class ShoppingCartController extends BaseController
         }
         Long userId = getCurrentUserIdOrGuest();
         return toAjax(shoppingCartService.addItem(userId, req.getProductId(), req.getQuantity()));
+    }
+
+    /**
+     * AI专用：加入购物车（通过userId指定用户，避免服务间调用丢失登录态）
+     */
+    @PostMapping("/addByAi")
+    public AjaxResult addByAi(@RequestBody CartAddByAiReq req, @RequestHeader(value = "X-AI-SECRET", required = false) String secret)
+    {
+        validateAiSecret(secret);
+        if (req == null || req.getUserId() == null || req.getUserId() <= 0 || req.getProductId() == null)
+        {
+            throw new ServiceException("userId/productId不能为空");
+        }
+        return toAjax(shoppingCartService.addItem(req.getUserId(), req.getProductId(), req.getQuantity()));
     }
 
     /**
@@ -183,6 +202,55 @@ public class ShoppingCartController extends BaseController
         public void setQuantity(Integer quantity)
         {
             this.quantity = quantity;
+        }
+    }
+
+    public static class CartAddByAiReq
+    {
+        private Long userId;
+        private Long productId;
+        private Integer quantity;
+
+        public Long getUserId()
+        {
+            return userId;
+        }
+
+        public void setUserId(Long userId)
+        {
+            this.userId = userId;
+        }
+
+        public Long getProductId()
+        {
+            return productId;
+        }
+
+        public void setProductId(Long productId)
+        {
+            this.productId = productId;
+        }
+
+        public Integer getQuantity()
+        {
+            return quantity;
+        }
+
+        public void setQuantity(Integer quantity)
+        {
+            this.quantity = quantity;
+        }
+    }
+
+    private void validateAiSecret(String secret)
+    {
+        if (aiTradeSecret == null || aiTradeSecret.trim().isEmpty())
+        {
+            return;
+        }
+        if (!aiTradeSecret.equals(secret))
+        {
+            throw new ServiceException("AI调用鉴权失败");
         }
     }
 
