@@ -1,6 +1,7 @@
 package com.snow.web.controller.business;
 
 import java.util.Map;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,8 @@ import com.snow.common.annotation.Anonymous;
 import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
+import com.snow.framework.config.ServerConfig;
+import com.snow.web.controller.business.support.MediaUrlResolver;
 
 /**
  * 用户端旅游团接口（简单CRUD + 详情组合返回）
@@ -27,6 +30,8 @@ public class TourGroupController extends BaseController
 {
     @Autowired
     private ITourGroupService tourGroupService;
+    @Autowired
+    private ServerConfig serverConfig;
 
     /**
      * 列表（支持分页）
@@ -36,7 +41,21 @@ public class TourGroupController extends BaseController
     public TableDataInfo list(TourGroup tourGroup)
     {
         startPage();
-        return getDataTable(tourGroupService.selectTourGroupList(tourGroup));
+        TableDataInfo table = getDataTable(tourGroupService.selectTourGroupList(tourGroup));
+        String baseUrl = serverConfig.getUrl();
+        List<?> rows = table.getRows();
+        if (rows != null)
+        {
+            for (Object row : rows)
+            {
+                if (row instanceof TourGroup)
+                {
+                    TourGroup group = (TourGroup) row;
+                    group.setCoverImage(MediaUrlResolver.resolve(baseUrl, group.getCoverImage()));
+                }
+            }
+        }
+        return table;
     }
 
     /**
@@ -46,7 +65,12 @@ public class TourGroupController extends BaseController
     @GetMapping("/{id}")
     public AjaxResult getInfo(@PathVariable("id") Long id)
     {
-        return success(tourGroupService.selectTourGroupById(id));
+        TourGroup group = tourGroupService.selectTourGroupById(id);
+        if (group != null)
+        {
+            group.setCoverImage(MediaUrlResolver.resolve(serverConfig.getUrl(), group.getCoverImage()));
+        }
+        return success(group);
     }
 
     /**
@@ -57,6 +81,19 @@ public class TourGroupController extends BaseController
     public AjaxResult getFull(@PathVariable("id") Long id)
     {
         Map<String, Object> data = tourGroupService.selectTourGroupFull(id);
+        String baseUrl = serverConfig.getUrl();
+        Object groupObj = data.get("group");
+        if (groupObj instanceof TourGroup)
+        {
+            TourGroup group = (TourGroup) groupObj;
+            group.setCoverImage(MediaUrlResolver.resolve(baseUrl, group.getCoverImage()));
+        }
+        Object detailObj = data.get("detail");
+        if (detailObj instanceof TourGroupDetail)
+        {
+            TourGroupDetail detail = (TourGroupDetail) detailObj;
+            detail.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, detail.getImagesJson()));
+        }
         return success(data);
     }
 

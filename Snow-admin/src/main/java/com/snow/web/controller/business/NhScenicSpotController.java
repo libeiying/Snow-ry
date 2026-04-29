@@ -10,6 +10,8 @@ import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
 import com.snow.common.enums.BusinessType;
+import com.snow.framework.config.ServerConfig;
+import com.snow.web.controller.business.support.MediaUrlResolver;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,13 +31,29 @@ public class NhScenicSpotController extends BaseController
 {
     @Autowired
     private INhScenicSpotService nhScenicSpotService;
+    @Autowired
+    private ServerConfig serverConfig;
 
     @Anonymous
     @GetMapping("/page")
     public TableDataInfo page(NhScenicSpot nhScenicSpot)
     {
         startPage();
-        return getDataTable(nhScenicSpotService.selectNhScenicSpotList(nhScenicSpot));
+        TableDataInfo table = getDataTable(nhScenicSpotService.selectNhScenicSpotList(nhScenicSpot));
+        String baseUrl = serverConfig.getUrl();
+        List<?> rows = table.getRows();
+        if (rows != null)
+        {
+            for (Object row : rows)
+            {
+                if (row instanceof NhScenicSpot)
+                {
+                    NhScenicSpot item = (NhScenicSpot) row;
+                    item.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, item.getImagesJson()));
+                }
+            }
+        }
+        return table;
     }
 
     @Anonymous
@@ -47,7 +65,7 @@ public class NhScenicSpotController extends BaseController
         {
             return AjaxResult.error("Record not found");
         }
-        return AjaxResult.success(toDetail(data));
+        return AjaxResult.success(toDetail(data, serverConfig.getUrl()));
     }
 
     @Anonymous
@@ -84,24 +102,24 @@ public class NhScenicSpotController extends BaseController
         return toAjax(nhScenicSpotService.deleteNhScenicSpotByIds(req.getIds()));
     }
 
-    private Map<String, Object> toDetail(NhScenicSpot data)
+    private Map<String, Object> toDetail(NhScenicSpot data, String baseUrl)
     {
         Map<String, Object> detail = new LinkedHashMap<>();
         detail.put("id", data.getId());
         detail.put("spotName", data.getSpotName());
         detail.put("city", data.getCity());
         detail.put("spotContent", data.getSpotContent());
-        detail.put("imagesJson", parseImages(data.getImagesJson()));
+        detail.put("imagesJson", parseImages(baseUrl, data.getImagesJson()));
         return detail;
     }
 
-    private JSONArray parseImages(String imagesJson)
+    private JSONArray parseImages(String baseUrl, String imagesJson)
     {
         if (imagesJson == null || imagesJson.isEmpty())
         {
             return new JSONArray();
         }
-        return JSON.parseArray(imagesJson);
+        return MediaUrlResolver.resolveJsonArray(baseUrl, JSON.parseArray(imagesJson));
     }
 
     public static class ScenicSaveReq

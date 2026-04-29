@@ -25,8 +25,10 @@ import com.snow.common.core.domain.model.LoginUser;
 import com.snow.common.exception.ServiceException;
 import com.snow.common.utils.SecurityUtils;
 import com.snow.common.utils.StringUtils;
+import com.snow.framework.config.ServerConfig;
 import com.snow.framework.web.service.TokenService;
 import com.snow.system.service.ISysUserService;
+import com.snow.web.controller.business.support.MediaUrlResolver;
 
 /**
  * 用户端常用信息接口
@@ -43,6 +45,8 @@ public class AppUserCommonInfoController extends BaseController
 
     @Autowired
     private TokenService tokenService;
+    @Autowired
+    private ServerConfig serverConfig;
 
     @Anonymous
     @GetMapping("/profile")
@@ -65,7 +69,7 @@ public class AppUserCommonInfoController extends BaseController
         data.put("phonenumber", user.getPhonenumber());
         data.put("email", user.getEmail());
         data.put("sex", user.getSex());
-        data.put("avatar", user.getAvatar());
+        data.put("avatar", MediaUrlResolver.resolve(serverConfig.getUrl(), user.getAvatar()));
         return success(data);
     }
 
@@ -93,7 +97,7 @@ public class AppUserCommonInfoController extends BaseController
             userData.put("phonenumber", user.getPhonenumber());
             userData.put("email", user.getEmail());
             userData.put("sex", user.getSex());
-            userData.put("avatar", user.getAvatar());
+            userData.put("avatar", MediaUrlResolver.resolve(serverConfig.getUrl(), user.getAvatar()));
         }
         Map<String, Object> data = new HashMap<>();
         data.put("user", userData);

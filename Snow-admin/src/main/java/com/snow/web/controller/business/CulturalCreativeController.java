@@ -1,6 +1,7 @@
 package com.snow.web.controller.business;
 
 import java.util.Map;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import com.snow.common.core.page.TableDataInfo;
 import com.snow.common.utils.file.FileUploadUtils;
 import com.snow.common.utils.file.MimeTypeUtils;
 import com.snow.framework.config.ServerConfig;
+import com.snow.web.controller.business.support.MediaUrlResolver;
 
 /**
  * 用户端文创接口
@@ -43,7 +45,22 @@ public class CulturalCreativeController extends BaseController
     public TableDataInfo list(CulturalCreativeProduct product)
     {
         startPage();
-        return getDataTable(culturalCreativeService.selectCulturalCreativeProductList(product));
+        TableDataInfo table = getDataTable(culturalCreativeService.selectCulturalCreativeProductList(product));
+        String baseUrl = serverConfig.getUrl();
+        List<?> rows = table.getRows();
+        if (rows != null)
+        {
+            for (Object row : rows)
+            {
+                if (row instanceof CulturalCreativeProduct)
+                {
+                    CulturalCreativeProduct item = (CulturalCreativeProduct) row;
+                    item.setCoverImage(MediaUrlResolver.resolve(baseUrl, item.getCoverImage()));
+                    item.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, item.getImagesJson()));
+                }
+            }
+        }
+        return table;
     }
 
     /**
@@ -54,6 +71,28 @@ public class CulturalCreativeController extends BaseController
     public AjaxResult getFull(@PathVariable("id") Long id)
     {
         Map<String, Object> data = culturalCreativeService.selectCulturalCreativeFull(id);
+        String baseUrl = serverConfig.getUrl();
+        Object productObj = data.get("product");
+        if (productObj instanceof CulturalCreativeProduct)
+        {
+            CulturalCreativeProduct p = (CulturalCreativeProduct) productObj;
+            p.setCoverImage(MediaUrlResolver.resolve(baseUrl, p.getCoverImage()));
+            p.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, p.getImagesJson()));
+        }
+        Object commentsObj = data.get("comments");
+        if (commentsObj instanceof List<?>)
+        {
+            for (Object item : (List<?>) commentsObj)
+            {
+                if (item instanceof com.snow.business.cultural.domain.CulturalCreativeComment)
+                {
+                    com.snow.business.cultural.domain.CulturalCreativeComment c =
+                            (com.snow.business.cultural.domain.CulturalCreativeComment) item;
+                    c.setUserAvatar(MediaUrlResolver.resolve(baseUrl, c.getUserAvatar()));
+                    c.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, c.getImagesJson()));
+                }
+            }
+        }
         return success(data);
     }
 

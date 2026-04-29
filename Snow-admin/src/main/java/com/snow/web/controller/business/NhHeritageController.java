@@ -10,6 +10,8 @@ import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
 import com.snow.common.enums.BusinessType;
+import com.snow.framework.config.ServerConfig;
+import com.snow.web.controller.business.support.MediaUrlResolver;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,8 @@ public class NhHeritageController extends BaseController
 {
     @Autowired
     private INhHeritageService nhHeritageService;
+    @Autowired
+    private ServerConfig serverConfig;
 
     /**
      * Query heritage list with pagination.
@@ -42,7 +46,22 @@ public class NhHeritageController extends BaseController
     public TableDataInfo page(NhHeritage nhHeritage)
     {
         startPage();
-        return getDataTable(nhHeritageService.selectNhHeritageList(nhHeritage));
+        TableDataInfo table = getDataTable(nhHeritageService.selectNhHeritageList(nhHeritage));
+        String baseUrl = serverConfig.getUrl();
+        List<?> rows = table.getRows();
+        if (rows != null)
+        {
+            for (Object row : rows)
+            {
+                if (row instanceof NhHeritage)
+                {
+                    NhHeritage item = (NhHeritage) row;
+                    item.setCoverImage(MediaUrlResolver.resolve(baseUrl, item.getCoverImage()));
+                    item.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, item.getImagesJson()));
+                }
+            }
+        }
+        return table;
     }
 
     /**
@@ -57,7 +76,7 @@ public class NhHeritageController extends BaseController
         {
             return AjaxResult.error("Record not found");
         }
-        return AjaxResult.success(toDetail(data));
+        return AjaxResult.success(toDetail(data, serverConfig.getUrl()));
     }
 
     /**
@@ -118,7 +137,7 @@ public class NhHeritageController extends BaseController
         return toAjax(nhHeritageService.deleteNhHeritageByIds(ids));
     }
 
-    private Map<String, Object> toDetail(NhHeritage data)
+    private Map<String, Object> toDetail(NhHeritage data, String baseUrl)
     {
         Map<String, Object> detail = new LinkedHashMap<>();
         detail.put("id", data.getId());
@@ -129,10 +148,10 @@ public class NhHeritageController extends BaseController
         detail.put("level", data.getLevel());
         detail.put("inheritor", data.getInheritor());
         detail.put("description", data.getDescription());
-        detail.put("imagesJson", parseImages(data.getImagesJson()));
+        detail.put("imagesJson", parseImages(baseUrl, data.getImagesJson()));
         detail.put("status", data.getStatus());
         detail.put("remark", data.getRemark());
-        detail.put("coverImage", data.getCoverImage());
+        detail.put("coverImage", MediaUrlResolver.resolve(baseUrl, data.getCoverImage()));
         detail.put("createBy", data.getCreateBy());
         detail.put("createTime", data.getCreateTime());
         detail.put("updateBy", data.getUpdateBy());
@@ -140,13 +159,13 @@ public class NhHeritageController extends BaseController
         return detail;
     }
 
-    private JSONArray parseImages(String imagesJson)
+    private JSONArray parseImages(String baseUrl, String imagesJson)
     {
         if (imagesJson == null || imagesJson.isEmpty())
         {
             return new JSONArray();
         }
-        return JSON.parseArray(imagesJson);
+        return MediaUrlResolver.resolveJsonArray(baseUrl, JSON.parseArray(imagesJson));
     }
 
     public static class HeritageSaveReq
