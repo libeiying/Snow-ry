@@ -1,5 +1,11 @@
 <template>
   <div class="app-container">
+    <el-row :gutter="12" class="mb12">
+      <el-col :span="6"><div class="monitor-card"><div class="monitor-title">任务总数</div><div class="monitor-value">{{ total }}</div></div></el-col>
+      <el-col :span="6"><div class="monitor-card"><div class="monitor-title">运行中</div><div class="monitor-value success">{{ runningCount }}</div></div></el-col>
+      <el-col :span="6"><div class="monitor-card"><div class="monitor-title">已暂停</div><div class="monitor-value warning">{{ pausedCount }}</div></div></el-col>
+      <el-col :span="6"><div class="monitor-card"><div class="monitor-title">本页任务</div><div class="monitor-value">{{ jobList.length }}</div></div></el-col>
+    </el-row>
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="任务名称" prop="jobName">
         <el-input
@@ -348,6 +354,14 @@ export default {
       }
     }
   },
+  computed: {
+    runningCount() {
+      return this.jobList.filter(item => item.status === "0").length
+    },
+    pausedCount() {
+      return this.jobList.filter(item => item.status === "1").length
+    }
+  },
   created() {
     this.getList()
   },
@@ -511,3 +525,36 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.mb12 {
+  margin-bottom: 12px;
+}
+
+.monitor-card {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.monitor-title {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.monitor-value {
+  color: #303133;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.monitor-value.success {
+  color: #67c23a;
+}
+
+.monitor-value.warning {
+  color: #e6a23c;
+}
+</style>

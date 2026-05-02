@@ -1,6 +1,7 @@
 package com.snow.business.order.domain;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import com.snow.common.core.domain.BaseEntity;
 
 /**
@@ -20,6 +21,7 @@ public class OrderPayment extends BaseEntity
     private String transactionNo;
     private String callbackPayload;
     private String failReason;
+    private Date paidTime;
 
     public Long getId()
     {
@@ -119,5 +121,15 @@ public class OrderPayment extends BaseEntity
     public void setFailReason(String failReason)
     {
         this.failReason = failReason;
+    }
+
+    public Date getPaidTime()
+    {
+        return paidTime;
+    }
+
+    public void setPaidTime(Date paidTime)
+    {
+        this.paidTime = paidTime;
     }
 }

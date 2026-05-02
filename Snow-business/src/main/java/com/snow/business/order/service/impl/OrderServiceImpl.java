@@ -1,6 +1,7 @@
 package com.snow.business.order.service.impl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -119,6 +120,7 @@ public class OrderServiceImpl implements IOrderService
         data.put("order", order);
         data.put("items", orderItemMapper.selectOrderItemListByOrderNo(orderNo));
         data.put("payment", orderPaymentMapper.selectLatestByOrderNo(orderNo));
+        data.put("paymentList", orderPaymentMapper.selectPaymentListByOrderNo(orderNo));
         return data;
     }
 
@@ -194,6 +196,29 @@ public class OrderServiceImpl implements IOrderService
         return orderInfoMapper.cancelTimeoutOrders(realTimeoutMinutes, realLimit);
     }
 
+    @Override
+    public Map<String, Object> selectManageOrderStats(int days)
+    {
+        int realDays = days <= 0 ? 7 : Math.min(days, 60);
+        Map<String, Object> overview = new HashMap<>();
+        overview.put("totalOrders", orderInfoMapper.countAllOrders());
+        overview.put("todayOrders", orderInfoMapper.countTodayOrders());
+        overview.put("pendingPayOrders", orderInfoMapper.countByOrderStatus("0"));
+        overview.put("paidOrders", orderInfoMapper.countByOrderStatus("1"));
+        overview.put("shippedOrders", orderInfoMapper.countByOrderStatus("3"));
+        overview.put("finishedOrders", orderInfoMapper.countByOrderStatus("4"));
+        overview.put("cancelOrders", orderInfoMapper.countByOrderStatus("2"));
+        overview.put("paidAmountTotal", orderInfoMapper.sumPayAmountByPayStatus("1"));
+        overview.put("paidRate", calculateRate(orderInfoMapper.countByPayStatus("1"), orderInfoMapper.countAllOrders()));
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("overview", overview);
+        data.put("trend", orderInfoMapper.selectDailyOrderTrend(realDays));
+        data.put("statusDistribution", orderInfoMapper.selectOrderStatusDistribution());
+        data.put("channelDistribution", orderInfoMapper.selectPayChannelDistribution());
+        return data;
+    }
+
     private int doTransfer(OrderInfo order, OrderEvent event)
     {
         if (order == null)
@@ -265,5 +290,18 @@ public class OrderServiceImpl implements IOrderService
     private String generateTxnNo(String orderNo)
     {
         return "TXN" + DateUtils.dateTimeNow("yyyyMMddHHmmssSSS") + orderNo.substring(Math.max(0, orderNo.length() - 6));
+    }
+
+    private BigDecimal calculateRate(Long numerator, Long denominator)
+    {
+        long up = numerator == null ? 0L : numerator;
+        long down = denominator == null ? 0L : denominator;
+        if (down <= 0L)
+        {
+            return BigDecimal.ZERO;
+        }
+        return BigDecimal.valueOf(up)
+            .multiply(BigDecimal.valueOf(100))
+            .divide(BigDecimal.valueOf(down), 2, RoundingMode.HALF_UP);
     }
 }

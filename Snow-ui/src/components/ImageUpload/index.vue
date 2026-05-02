@@ -47,6 +47,7 @@
 <script>
 import { getToken } from "@/utils/auth"
 import { isExternal } from "@/utils/validate"
+import { resolveUploadResponseUrl } from "@/utils/uploadUrl"
 import Sortable from 'sortablejs'
 
 export default {
@@ -133,7 +134,15 @@ export default {
               if (item.indexOf(this.baseUrl) === -1 && !isExternal(item)) {
                   item = { name: this.baseUrl + item, url: this.baseUrl + item }
               } else {
-                  item = { name: item, url: item }
+                  let u = item
+                  if (/\s/.test(u) && /^https?:\/\//i.test(u)) {
+                    try {
+                      u = encodeURI(u)
+                    } catch (e) {
+                      u = item
+                    }
+                  }
+                  item = { name: u, url: u }
               }
             }
             return item
@@ -193,10 +202,12 @@ export default {
     handleExceed() {
       this.$modal.msgError(`上传文件数量不能超过 ${this.limit} 个!`)
     },
-    // 上传成功回调
+    // 上传成功回调（res.url 为完整地址；res.fileName 在本地为 /profile/...，OSS 下也可能仅为路径，故统一用 resolveUploadResponseUrl）
     handleUploadSuccess(res, file) {
       if (res.code === 200) {
-        this.uploadList.push({ name: res.fileName, url: res.fileName })
+        const url = resolveUploadResponseUrl(res, this.baseUrl)
+        const name = res.newFileName || res.originalFilename || res.fileName || file.name
+        this.uploadList.push({ name, url })
         this.uploadedSuccessfully()
       } else {
         this.number--

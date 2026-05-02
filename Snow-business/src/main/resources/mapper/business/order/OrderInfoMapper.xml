@@ -16,13 +16,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="receiverPhone"   column="receiver_phone"   />
         <result property="receiverAddress" column="receiver_address" />
         <result property="remark"          column="remark"           />
+        <result property="payTime"         column="pay_time"         />
+        <result property="cancelTime"      column="cancel_time"      />
+        <result property="shipTime"        column="ship_time"        />
+        <result property="finishTime"      column="finish_time"      />
         <result property="createTime"      column="create_time"      />
         <result property="updateTime"      column="update_time"      />
     </resultMap>
 
     <sql id="selectOrderInfoVo">
         select id, order_no, user_id, order_status, pay_status, total_amount, pay_amount,
-               receiver_name, receiver_phone, receiver_address, remark, create_time, update_time
+               receiver_name, receiver_phone, receiver_address, remark,
+               pay_time, cancel_time, ship_time, finish_time, create_time, update_time
           from orders
     </sql>
 
@@ -49,7 +54,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectOrderInfoVo"/>
         <where>
             <if test="orderNo != null and orderNo != ''">
-                and order_no = #{orderNo}
+                and order_no like concat('%', #{orderNo}, '%')
             </if>
             <if test="userId != null">
                 and user_id = #{userId}
@@ -109,4 +114,64 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and create_time <![CDATA[<=]]> DATE_SUB(now(), interval #{timeoutMinutes} minute)
         limit #{limit}
     </update>
+
+    <select id="countAllOrders" resultType="long">
+        select count(*) from orders
+    </select>
+
+    <select id="countTodayOrders" resultType="long">
+        select count(*)
+        from orders
+        where date(create_time) = curdate()
+    </select>
+
+    <select id="countByOrderStatus" resultType="long">
+        select count(*)
+        from orders
+        where order_status = #{orderStatus}
+    </select>
+
+    <select id="countByPayStatus" resultType="long">
+        select count(*)
+        from orders
+        where pay_status = #{payStatus}
+    </select>
+
+    <select id="sumPayAmountByPayStatus" resultType="java.math.BigDecimal">
+        select ifnull(sum(pay_amount), 0)
+        from orders
+        where pay_status = #{payStatus}
+    </select>
+
+    <select id="selectDailyOrderTrend" resultType="java.util.HashMap">
+        select date_format(t.dayDate, '%m-%d') as dayLabel,
+               t.orderCount as orderCount,
+               t.paidAmount as paidAmount
+        from (
+            select date(create_time) as dayDate,
+                   count(*) as orderCount,
+                   ifnull(sum(case when pay_status = '1' then pay_amount else 0 end), 0) as paidAmount
+            from orders
+            where create_time <![CDATA[>=]]> date_sub(curdate(), interval #{days} day)
+            group by date(create_time)
+        ) t
+        order by t.dayDate asc
+    </select>
+
+    <select id="selectOrderStatusDistribution" resultType="java.util.HashMap">
+        select order_status as status,
+               count(*) as total
+        from orders
+        group by order_status
+        order by order_status
+    </select>
+
+    <select id="selectPayChannelDistribution" resultType="java.util.HashMap">
+        select pay_channel as channel,
+               count(*) as total
+        from order_payment
+        where pay_status = '1'
+        group by pay_channel
+        order by total desc
+    </select>
 </mapper>

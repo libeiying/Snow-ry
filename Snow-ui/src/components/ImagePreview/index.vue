@@ -37,7 +37,7 @@ export default {
       }
       let real_src = this.src.split(",")[0]
       if (isExternal(real_src)) {
-        return real_src
+        return /\s/.test(real_src) ? encodeURI(real_src) : real_src
       }
       return process.env.VUE_APP_BASE_API + real_src
     },
@@ -49,7 +49,7 @@ export default {
       let srcList = []
       real_src_list.forEach(item => {
         if (isExternal(item)) {
-          return srcList.push(item)
+          return srcList.push(/\s/.test(item) ? encodeURI(item) : item)
         }
         return srcList.push(process.env.VUE_APP_BASE_API + item)
       })

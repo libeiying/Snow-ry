@@ -1,5 +1,10 @@
 <template>
   <div class="app-container">
+    <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="el-icon-refresh" size="mini" @click="getList">刷新监控</el-button>
+      </el-col>
+    </el-row>
     <el-row :gutter="10">
       <el-col :span="24" class="card-box">
         <el-card>
@@ -77,7 +82,8 @@ export default {
       // 使用内存
       usedmemory: null,
       // cache信息
-      cache: []
+      cache: [],
+      onResize: null
     }
   },
   created() {
@@ -91,6 +97,9 @@ export default {
         this.cache = response.data
         this.$modal.closeLoading()
 
+        if (this.commandstats) {
+          this.commandstats.dispose()
+        }
         this.commandstats = echarts.init(this.$refs.commandstats, "macarons")
         this.commandstats.setOption({
           tooltip: {
@@ -110,39 +119,70 @@ export default {
             }
           ]
         })
+        if (this.usedmemory) {
+          this.usedmemory.dispose()
+        }
         this.usedmemory = echarts.init(this.$refs.usedmemory, "macarons")
         this.usedmemory.setOption({
           tooltip: {
-            formatter: "{b} <br/>{a} : " + this.cache.info.used_memory_human,
+            formatter: "{b} <br/>当前内存: " + this.cache.info.used_memory_human,
           },
           series: [
             {
               name: "峰值",
               type: "gauge",
               min: 0,
-              max: 1000,
+              max: 100,
               detail: {
-                formatter: this.cache.info.used_memory_human,
+                formatter: this.getMemoryPercent(this.cache.info) + "%",
               },
               data: [
                 {
-                  value: parseFloat(this.cache.info.used_memory_human),
+                  value: this.getMemoryPercent(this.cache.info),
                   name: "内存消耗",
                 }
               ]
             }
           ]
         })
-        window.addEventListener("resize", () => {
-          this.commandstats.resize()
-          this.usedmemory.resize()
-        })
+        if (!this.onResize) {
+          this.onResize = () => {
+            this.commandstats && this.commandstats.resize()
+            this.usedmemory && this.usedmemory.resize()
+          }
+          window.addEventListener("resize", this.onResize)
+        }
       })
+    },
+    getMemoryPercent(info) {
+      if (!info || !info.used_memory_peak_perc) {
+        return 0
+      }
+      return Math.min(100, Math.max(0, parseFloat(info.used_memory_peak_perc)))
     },
     // 打开加载层
     openLoading() {
       this.$modal.loading("正在加载缓存监控数据，请稍候！")
     }
+  },
+  beforeDestroy() {
+    if (this.onResize) {
+      window.removeEventListener("resize", this.onResize)
+    }
+    if (this.commandstats) {
+      this.commandstats.dispose()
+      this.commandstats = null
+    }
+    if (this.usedmemory) {
+      this.usedmemory.dispose()
+      this.usedmemory = null
+    }
   }
 }
 </script>
+
+<style scoped>
+.mb8 {
+  margin-bottom: 8px;
+}
+</style>

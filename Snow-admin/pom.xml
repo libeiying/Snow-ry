@@ -43,6 +43,12 @@
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
 
+        <!-- 阿里云 OSS：由入口模块显式引入，保证 fat jar / IDE / DevTools 运行时一定能加载 SDK（避免仅靠传递依赖未解析到 jar） -->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+        </dependency>
+
         <!-- 核心模块-->
         <dependency>
             <groupId>com.snow</groupId>

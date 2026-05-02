@@ -1,5 +1,6 @@
 package com.snow.business.order.mapper;
 
+import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.snow.business.order.domain.OrderPayment;
 
@@ -9,6 +10,8 @@ import com.snow.business.order.domain.OrderPayment;
 public interface OrderPaymentMapper
 {
     public OrderPayment selectLatestByOrderNo(@Param("orderNo") String orderNo);
+
+    public List<OrderPayment> selectPaymentListByOrderNo(@Param("orderNo") String orderNo);
 
     public int insertOrderPayment(OrderPayment payment);
 

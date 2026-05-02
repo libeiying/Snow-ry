@@ -19,7 +19,7 @@ import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
 import com.snow.framework.config.ServerConfig;
-import com.snow.web.controller.business.support.MediaUrlResolver;
+import com.snow.framework.web.service.OssUploadService;
 
 /**
  * 用户端旅游团接口（简单CRUD + 详情组合返回）
@@ -32,6 +32,8 @@ public class TourGroupController extends BaseController
     private ITourGroupService tourGroupService;
     @Autowired
     private ServerConfig serverConfig;
+    @Autowired
+    private OssUploadService ossUploadService;
 
     /**
      * 列表（支持分页）
@@ -51,7 +53,7 @@ public class TourGroupController extends BaseController
                 if (row instanceof TourGroup)
                 {
                     TourGroup group = (TourGroup) row;
-                    group.setCoverImage(MediaUrlResolver.resolve(baseUrl, group.getCoverImage()));
+                    group.setCoverImage(ossUploadService.resolveForApi(baseUrl, group.getCoverImage()));
                 }
             }
         }
@@ -68,7 +70,7 @@ public class TourGroupController extends BaseController
         TourGroup group = tourGroupService.selectTourGroupById(id);
         if (group != null)
         {
-            group.setCoverImage(MediaUrlResolver.resolve(serverConfig.getUrl(), group.getCoverImage()));
+            group.setCoverImage(ossUploadService.resolveForApi(serverConfig.getUrl(), group.getCoverImage()));
         }
         return success(group);
     }
@@ -86,13 +88,13 @@ public class TourGroupController extends BaseController
         if (groupObj instanceof TourGroup)
         {
             TourGroup group = (TourGroup) groupObj;
-            group.setCoverImage(MediaUrlResolver.resolve(baseUrl, group.getCoverImage()));
+            group.setCoverImage(ossUploadService.resolveForApi(baseUrl, group.getCoverImage()));
         }
         Object detailObj = data.get("detail");
         if (detailObj instanceof TourGroupDetail)
         {
             TourGroupDetail detail = (TourGroupDetail) detailObj;
-            detail.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, detail.getImagesJson()));
+            detail.setImagesJson(ossUploadService.resolveJsonArrayText(baseUrl, detail.getImagesJson()));
         }
         return success(data);
     }

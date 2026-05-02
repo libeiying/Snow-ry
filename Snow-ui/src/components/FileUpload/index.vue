@@ -30,7 +30,7 @@
     <!-- 文件列表 -->
     <transition-group ref="uploadFileList" class="upload-file-list el-upload-list el-upload-list--text" name="el-fade-in-linear" tag="ul">
       <li :key="file.url" class="el-upload-list__item ele-upload-list__item-content" v-for="(file, index) in fileList">
-        <el-link :href="`${baseUrl}${file.url}`" :underline="false" target="_blank">
+        <el-link :href="fileLinkHref(file)" :underline="false" target="_blank">
           <span class="el-icon-document"> {{ getFileName(file.name) }} </span>
         </el-link>
         <div class="ele-upload-list__item-content-action">
@@ -43,6 +43,8 @@
 
 <script>
 import { getToken } from "@/utils/auth"
+import { isExternal } from "@/utils/validate"
+import { resolveUploadResponseUrl } from "@/utils/uploadUrl"
 import Sortable from 'sortablejs'
 
 export default {
@@ -189,7 +191,8 @@ export default {
     // 上传成功回调
     handleUploadSuccess(res, file) {
       if (res.code === 200) {
-        this.uploadList.push({ name: res.fileName, url: res.fileName })
+        const url = resolveUploadResponseUrl(res, process.env.VUE_APP_BASE_API)
+        this.uploadList.push({ name: res.fileName, url })
         this.uploadedSuccessfully()
       } else {
         this.number--
@@ -213,6 +216,16 @@ export default {
         this.$emit("input", this.listToString(this.fileList))
         this.$modal.closeLoading()
       }
+    },
+    fileLinkHref(file) {
+      const u = file.url
+      if (!u) {
+        return '#'
+      }
+      if (isExternal(u) || /^https?:\/\//i.test(u)) {
+        return u
+      }
+      return this.baseUrl + (u.startsWith('/') ? u : '/' + u)
     },
     // 获取文件名称
     getFileName(name) {

@@ -15,14 +15,11 @@ import com.snow.business.cultural.domain.CulturalCreativeProduct;
 import com.snow.business.cultural.domain.dto.CommentSubmitRequest;
 import com.snow.business.cultural.service.ICulturalCreativeService;
 import com.snow.common.annotation.Anonymous;
-import com.snow.common.config.RuoYiConfig;
 import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
-import com.snow.common.utils.file.FileUploadUtils;
-import com.snow.common.utils.file.MimeTypeUtils;
 import com.snow.framework.config.ServerConfig;
-import com.snow.web.controller.business.support.MediaUrlResolver;
+import com.snow.framework.web.service.OssUploadService;
 
 /**
  * 用户端文创接口
@@ -36,6 +33,9 @@ public class CulturalCreativeController extends BaseController
 
     @Autowired
     private ServerConfig serverConfig;
+
+    @Autowired
+    private OssUploadService ossUploadService;
 
     /**
      * 列表（支持分页）
@@ -55,8 +55,8 @@ public class CulturalCreativeController extends BaseController
                 if (row instanceof CulturalCreativeProduct)
                 {
                     CulturalCreativeProduct item = (CulturalCreativeProduct) row;
-                    item.setCoverImage(MediaUrlResolver.resolve(baseUrl, item.getCoverImage()));
-                    item.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, item.getImagesJson()));
+                    item.setCoverImage(ossUploadService.resolveForApi(baseUrl, item.getCoverImage()));
+                    item.setImagesJson(ossUploadService.resolveJsonArrayText(baseUrl, item.getImagesJson()));
                 }
             }
         }
@@ -76,8 +76,8 @@ public class CulturalCreativeController extends BaseController
         if (productObj instanceof CulturalCreativeProduct)
         {
             CulturalCreativeProduct p = (CulturalCreativeProduct) productObj;
-            p.setCoverImage(MediaUrlResolver.resolve(baseUrl, p.getCoverImage()));
-            p.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, p.getImagesJson()));
+            p.setCoverImage(ossUploadService.resolveForApi(baseUrl, p.getCoverImage()));
+            p.setImagesJson(ossUploadService.resolveJsonArrayText(baseUrl, p.getImagesJson()));
         }
         Object commentsObj = data.get("comments");
         if (commentsObj instanceof List<?>)
@@ -88,8 +88,8 @@ public class CulturalCreativeController extends BaseController
                 {
                     com.snow.business.cultural.domain.CulturalCreativeComment c =
                             (com.snow.business.cultural.domain.CulturalCreativeComment) item;
-                    c.setUserAvatar(MediaUrlResolver.resolve(baseUrl, c.getUserAvatar()));
-                    c.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, c.getImagesJson()));
+                    c.setUserAvatar(ossUploadService.resolveForApi(baseUrl, c.getUserAvatar()));
+                    c.setImagesJson(ossUploadService.resolveJsonArrayText(baseUrl, c.getImagesJson()));
                 }
             }
         }
@@ -103,9 +103,8 @@ public class CulturalCreativeController extends BaseController
     @PostMapping("/comment/upload")
     public AjaxResult uploadCommentImage(@RequestParam("file") MultipartFile file) throws Exception
     {
-        String filePath = RuoYiConfig.getUploadPath();
-        String fileName = FileUploadUtils.upload(filePath, file, MimeTypeUtils.IMAGE_EXTENSION);
-        String url = serverConfig.getUrl() + fileName;
+        String fileName = ossUploadService.uploadImage(file);
+        String url = ossUploadService.resolveAccessUrl(serverConfig.getUrl(), fileName);
         AjaxResult ajax = AjaxResult.success();
         ajax.put("url", url);
         ajax.put("fileName", fileName);

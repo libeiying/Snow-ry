@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.northeast.mapper.NortheastAttractionRelationMapper">
+    <resultMap id="NortheastAttractionRelationResult" type="com.snow.business.northeast.domain.NortheastAttractionRelation">
+        <id property="id" column="id"/>
+        <result property="fromAttractionCode" column="from_attraction_code"/>
+        <result property="toAttractionCode" column="to_attraction_code"/>
+        <result property="relationType" column="relation_type"/>
+        <result property="distanceKm" column="distance_km"/>
+        <result property="travelMinutes" column="travel_minutes"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="remark" column="remark"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectNortheastAttractionRelationVo">
+        select id, from_attraction_code, to_attraction_code, relation_type, distance_km, travel_minutes,
+               sort_order, remark, status, create_time, update_time
+          from northeast_attraction_relation
+    </sql>
+
+    <select id="selectNortheastAttractionRelationById" resultMap="NortheastAttractionRelationResult">
+        <include refid="selectNortheastAttractionRelationVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectNortheastAttractionRelationList" resultMap="NortheastAttractionRelationResult">
+        <include refid="selectNortheastAttractionRelationVo"/>
+        <where>
+            <if test="fromAttractionCode != null and fromAttractionCode != ''">and from_attraction_code = #{fromAttractionCode}</if>
+            <if test="toAttractionCode != null and toAttractionCode != ''">and to_attraction_code = #{toAttractionCode}</if>
+            <if test="relationType != null and relationType != ''">and relation_type = #{relationType}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by sort_order asc, update_time desc
+    </select>
+
+    <insert id="insertNortheastAttractionRelation" parameterType="com.snow.business.northeast.domain.NortheastAttractionRelation" useGeneratedKeys="true" keyProperty="id">
+        insert into northeast_attraction_relation (from_attraction_code, to_attraction_code, relation_type, distance_km, travel_minutes, sort_order, remark, status)
+        values (#{fromAttractionCode}, #{toAttractionCode}, #{relationType}, #{distanceKm}, #{travelMinutes}, #{sortOrder}, #{remark}, #{status})
+    </insert>
+
+    <update id="updateNortheastAttractionRelation" parameterType="com.snow.business.northeast.domain.NortheastAttractionRelation">
+        update northeast_attraction_relation
+        <set>
+            <if test="fromAttractionCode != null">from_attraction_code = #{fromAttractionCode},</if>
+            <if test="toAttractionCode != null">to_attraction_code = #{toAttractionCode},</if>
+            <if test="relationType != null">relation_type = #{relationType},</if>
+            <if test="distanceKm != null">distance_km = #{distanceKm},</if>
+            <if test="travelMinutes != null">travel_minutes = #{travelMinutes},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteNortheastAttractionRelationById">delete from northeast_attraction_relation where id = #{id}</delete>
+    <delete id="deleteNortheastAttractionRelationByIds">
+        delete from northeast_attraction_relation where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

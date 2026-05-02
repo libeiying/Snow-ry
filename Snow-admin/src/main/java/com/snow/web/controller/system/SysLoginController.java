@@ -2,6 +2,7 @@ package com.snow.web.controller.system;
 
 import java.util.List;
 import java.util.Set;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,8 @@ import com.snow.common.core.domain.entity.SysUser;
 import com.snow.common.core.domain.model.LoginBody;
 import com.snow.common.core.domain.model.LoginUser;
 import com.snow.common.utils.SecurityUtils;
+import com.snow.framework.config.ServerConfig;
+import com.snow.framework.web.service.OssUploadService;
 import com.snow.framework.web.service.SysLoginService;
 import com.snow.framework.web.service.SysPermissionService;
 import com.snow.framework.web.service.TokenService;
@@ -38,6 +41,12 @@ public class SysLoginController
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private ServerConfig serverConfig;
+
+    @Autowired
+    private OssUploadService ossUploadService;
 
     /**
      * 登录方法
@@ -66,6 +75,9 @@ public class SysLoginController
     {
         LoginUser loginUser = SecurityUtils.getLoginUser();
         SysUser user = loginUser.getUser();
+        SysUser userView = new SysUser();
+        BeanUtils.copyProperties(user, userView);
+        userView.setAvatar(ossUploadService.resolveForApi(serverConfig.getUrl(), user.getAvatar()));
         // 角色集合
         Set<String> roles = permissionService.getRolePermission(user);
         // 权限集合
@@ -76,7 +88,7 @@ public class SysLoginController
             tokenService.refreshToken(loginUser);
         }
         AjaxResult ajax = AjaxResult.success();
-        ajax.put("user", user);
+        ajax.put("user", userView);
         ajax.put("roles", roles);
         ajax.put("permissions", permissions);
         return ajax;

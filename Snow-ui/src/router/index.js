@@ -217,6 +217,34 @@ export const dynamicRoutes = [
         meta: { title: '修改文创商品', activeMenu: '/goods/culturalCreative' }
       }
     ]
+  },
+  {
+    path: '/business/order-detail',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:order:query'],
+    children: [
+      {
+        path: 'index/:orderNo',
+        component: () => import('@/views/business/order/detail'),
+        name: 'OrderDetail',
+        meta: { title: '订单详情', activeMenu: '/business/order' }
+      }
+    ]
+  },
+  {
+    path: '/statistics/orderStats',
+    component: Layout,
+    hidden: true,
+    permissions: ['business:orderStats:list'],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/business/orderStats/index'),
+        name: 'OrderStats',
+        meta: { title: '订单统计', activeMenu: '/statistics/orderStats' }
+      }
+    ]
   }
 ]
 

@@ -1,6 +1,7 @@
 package com.snow.web.controller.system;
 
 import java.util.Map;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import com.snow.common.annotation.Log;
-import com.snow.common.config.RuoYiConfig;
 import com.snow.common.core.controller.BaseController;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.domain.entity.SysUser;
@@ -19,8 +19,8 @@ import com.snow.common.core.domain.model.LoginUser;
 import com.snow.common.enums.BusinessType;
 import com.snow.common.utils.SecurityUtils;
 import com.snow.common.utils.StringUtils;
-import com.snow.common.utils.file.FileUploadUtils;
-import com.snow.common.utils.file.MimeTypeUtils;
+import com.snow.framework.config.ServerConfig;
+import com.snow.framework.web.service.OssUploadService;
 import com.snow.framework.web.service.TokenService;
 import com.snow.system.service.ISysUserService;
 
@@ -39,6 +39,12 @@ public class SysProfileController extends BaseController
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private OssUploadService ossUploadService;
+
+    @Autowired
+    private ServerConfig serverConfig;
+
     /**
      * 个人信息
      */
@@ -47,7 +53,10 @@ public class SysProfileController extends BaseController
     {
         LoginUser loginUser = getLoginUser();
         SysUser user = loginUser.getUser();
-        AjaxResult ajax = AjaxResult.success(user);
+        SysUser userView = new SysUser();
+        BeanUtils.copyProperties(user, userView);
+        userView.setAvatar(ossUploadService.resolveForApi(serverConfig.getUrl(), user.getAvatar()));
+        AjaxResult ajax = AjaxResult.success(userView);
         ajax.put("roleGroup", userService.selectUserRoleGroup(loginUser.getUsername()));
         ajax.put("postGroup", userService.selectUserPostGroup(loginUser.getUsername()));
         return ajax;
@@ -124,11 +133,11 @@ public class SysProfileController extends BaseController
         if (!file.isEmpty())
         {
             LoginUser loginUser = getLoginUser();
-            String avatar = FileUploadUtils.upload(RuoYiConfig.getAvatarPath(), file, MimeTypeUtils.IMAGE_EXTENSION);
+            String avatar = ossUploadService.uploadAvatar(file);
             if (userService.updateUserAvatar(loginUser.getUsername(), avatar))
             {
                 AjaxResult ajax = AjaxResult.success();
-                ajax.put("imgUrl", avatar);
+                ajax.put("imgUrl", ossUploadService.resolveAccessUrl(serverConfig.getUrl(), avatar));
                 // 更新缓存用户头像
                 loginUser.getUser().setAvatar(avatar);
                 tokenService.setLoginUser(loginUser);

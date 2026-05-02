@@ -17,9 +17,9 @@ import com.snow.common.config.RuoYiConfig;
 import com.snow.common.constant.Constants;
 import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.utils.StringUtils;
-import com.snow.common.utils.file.FileUploadUtils;
 import com.snow.common.utils.file.FileUtils;
 import com.snow.framework.config.ServerConfig;
+import com.snow.framework.web.service.OssUploadService;
 
 /**
  * 通用请求处理
@@ -34,6 +34,9 @@ public class CommonController
 
     @Autowired
     private ServerConfig serverConfig;
+
+    @Autowired
+    private OssUploadService ossUploadService;
 
     private static final String FILE_DELIMETER = ",";
 
@@ -77,11 +80,8 @@ public class CommonController
     {
         try
         {
-            // 上传文件路径
-            String filePath = RuoYiConfig.getUploadPath();
-            // 上传并返回新文件名称
-            String fileName = FileUploadUtils.upload(filePath, file);
-            String url = serverConfig.getUrl() + fileName;
+            String fileName = ossUploadService.uploadGeneric(file);
+            String url = ossUploadService.resolveAccessUrl(serverConfig.getUrl(), fileName);
             AjaxResult ajax = AjaxResult.success();
             ajax.put("url", url);
             ajax.put("fileName", fileName);
@@ -103,17 +103,14 @@ public class CommonController
     {
         try
         {
-            // 上传文件路径
-            String filePath = RuoYiConfig.getUploadPath();
             List<String> urls = new ArrayList<String>();
             List<String> fileNames = new ArrayList<String>();
             List<String> newFileNames = new ArrayList<String>();
             List<String> originalFilenames = new ArrayList<String>();
             for (MultipartFile file : files)
             {
-                // 上传并返回新文件名称
-                String fileName = FileUploadUtils.upload(filePath, file);
-                String url = serverConfig.getUrl() + fileName;
+                String fileName = ossUploadService.uploadGeneric(file);
+                String url = ossUploadService.resolveAccessUrl(serverConfig.getUrl(), fileName);
                 urls.add(url);
                 fileNames.add(fileName);
                 newFileNames.add(FileUtils.getName(fileName));

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationProperties(prefix = "gen")
-@PropertySource(value = { "classpath:generator.yml" })
+@PropertySource(value = { "classpath:generator.yml" }, ignoreResourceNotFound = true)
 public class GenConfig
 {
     /** 作者 */
@@ -35,7 +35,7 @@ public class GenConfig
         return author;
     }
 
-    @Value("${author}")
+    @Value("${author:ruoyi}")
     public void setAuthor(String author)
     {
         GenConfig.author = author;
@@ -46,7 +46,7 @@ public class GenConfig
         return packageName;
     }
 
-    @Value("${packageName}")
+    @Value("${packageName:com.snow.system}")
     public void setPackageName(String packageName)
     {
         GenConfig.packageName = packageName;
@@ -57,7 +57,7 @@ public class GenConfig
         return autoRemovePre;
     }
 
-    @Value("${autoRemovePre}")
+    @Value("${autoRemovePre:false}")
     public void setAutoRemovePre(boolean autoRemovePre)
     {
         GenConfig.autoRemovePre = autoRemovePre;
@@ -68,7 +68,7 @@ public class GenConfig
         return tablePrefix;
     }
 
-    @Value("${tablePrefix}")
+    @Value("${tablePrefix:sys_}")
     public void setTablePrefix(String tablePrefix)
     {
         GenConfig.tablePrefix = tablePrefix;
@@ -79,7 +79,7 @@ public class GenConfig
         return allowOverwrite;
     }
 
-    @Value("${allowOverwrite}")
+    @Value("${allowOverwrite:false}")
     public void setAllowOverwrite(boolean allowOverwrite)
     {
         GenConfig.allowOverwrite = allowOverwrite;

@@ -11,7 +11,7 @@ import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
 import com.snow.common.enums.BusinessType;
 import com.snow.framework.config.ServerConfig;
-import com.snow.web.controller.business.support.MediaUrlResolver;
+import com.snow.framework.web.service.OssUploadService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +33,8 @@ public class NhScenicSpotController extends BaseController
     private INhScenicSpotService nhScenicSpotService;
     @Autowired
     private ServerConfig serverConfig;
+    @Autowired
+    private OssUploadService ossUploadService;
 
     @Anonymous
     @GetMapping("/page")
@@ -49,7 +51,7 @@ public class NhScenicSpotController extends BaseController
                 if (row instanceof NhScenicSpot)
                 {
                     NhScenicSpot item = (NhScenicSpot) row;
-                    item.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, item.getImagesJson()));
+                    item.setImagesJson(ossUploadService.resolveJsonArrayText(baseUrl, item.getImagesJson()));
                 }
             }
         }
@@ -119,7 +121,7 @@ public class NhScenicSpotController extends BaseController
         {
             return new JSONArray();
         }
-        return MediaUrlResolver.resolveJsonArray(baseUrl, JSON.parseArray(imagesJson));
+        return ossUploadService.resolveJsonArray(baseUrl, JSON.parseArray(imagesJson));
     }
 
     public static class ScenicSaveReq

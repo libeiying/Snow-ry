@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.northeast.mapper.NortheastRouteTemplateMapper">
+    <resultMap id="NortheastRouteTemplateResult" type="com.snow.business.northeast.domain.NortheastRouteTemplate">
+        <id property="id" column="id"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="title" column="title"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="routeType" column="route_type"/>
+        <result property="days" column="days"/>
+        <result property="nights" column="nights"/>
+        <result property="seasonTags" column="season_tags"/>
+        <result property="themeTags" column="theme_tags"/>
+        <result property="budgetMin" column="budget_min"/>
+        <result property="budgetMax" column="budget_max"/>
+        <result property="suitableFor" column="suitable_for"/>
+        <result property="summary" column="summary"/>
+        <result property="highlights" column="highlights"/>
+        <result property="dailyPlanJson" column="daily_plan_json"/>
+        <result property="attractionCodes" column="attraction_codes"/>
+        <result property="transportSuggestion" column="transport_suggestion"/>
+        <result property="estimatedCost" column="estimated_cost"/>
+        <result property="status" column="status"/>
+        <result property="source" column="source"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectNortheastRouteTemplateVo">
+        select id, template_code, title, province, city, route_type, days, nights, season_tags, theme_tags,
+               budget_min, budget_max, suitable_for, summary, highlights, daily_plan_json, attraction_codes,
+               transport_suggestion, estimated_cost, status, source, create_time, update_time
+          from northeast_route_template
+    </sql>
+
+    <select id="selectNortheastRouteTemplateById" resultMap="NortheastRouteTemplateResult">
+        <include refid="selectNortheastRouteTemplateVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectNortheastRouteTemplateList" resultMap="NortheastRouteTemplateResult">
+        <include refid="selectNortheastRouteTemplateVo"/>
+        <where>
+            <if test="templateCode != null and templateCode != ''">and template_code like concat('%', #{templateCode}, '%')</if>
+            <if test="title != null and title != ''">and title like concat('%', #{title}, '%')</if>
+            <if test="city != null and city != ''">and city like concat('%', #{city}, '%')</if>
+            <if test="routeType != null and routeType != ''">and route_type = #{routeType}</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by update_time desc
+    </select>
+
+    <insert id="insertNortheastRouteTemplate" parameterType="com.snow.business.northeast.domain.NortheastRouteTemplate" useGeneratedKeys="true" keyProperty="id">
+        insert into northeast_route_template (template_code, title, province, city, route_type, days, nights, season_tags, theme_tags,
+        budget_min, budget_max, suitable_for, summary, highlights, daily_plan_json, attraction_codes, transport_suggestion, estimated_cost, status, source)
+        values (#{templateCode}, #{title}, #{province}, #{city}, #{routeType}, #{days}, #{nights}, #{seasonTags}, #{themeTags},
+        #{budgetMin}, #{budgetMax}, #{suitableFor}, #{summary}, #{highlights}, #{dailyPlanJson}, #{attractionCodes}, #{transportSuggestion}, #{estimatedCost}, #{status}, #{source})
+    </insert>
+
+    <update id="updateNortheastRouteTemplate" parameterType="com.snow.business.northeast.domain.NortheastRouteTemplate">
+        update northeast_route_template
+        <set>
+            <if test="templateCode != null">template_code = #{templateCode},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="province != null">province = #{province},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="routeType != null">route_type = #{routeType},</if>
+            <if test="days != null">days = #{days},</if>
+            <if test="nights != null">nights = #{nights},</if>
+            <if test="seasonTags != null">season_tags = #{seasonTags},</if>
+            <if test="themeTags != null">theme_tags = #{themeTags},</if>
+            <if test="budgetMin != null">budget_min = #{budgetMin},</if>
+            <if test="budgetMax != null">budget_max = #{budgetMax},</if>
+            <if test="suitableFor != null">suitable_for = #{suitableFor},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="highlights != null">highlights = #{highlights},</if>
+            <if test="dailyPlanJson != null">daily_plan_json = #{dailyPlanJson},</if>
+            <if test="attractionCodes != null">attraction_codes = #{attractionCodes},</if>
+            <if test="transportSuggestion != null">transport_suggestion = #{transportSuggestion},</if>
+            <if test="estimatedCost != null">estimated_cost = #{estimatedCost},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="source != null">source = #{source},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteNortheastRouteTemplateById">delete from northeast_route_template where id = #{id}</delete>
+    <delete id="deleteNortheastRouteTemplateByIds">
+        delete from northeast_route_template where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

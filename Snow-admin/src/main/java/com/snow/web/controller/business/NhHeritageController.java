@@ -11,7 +11,7 @@ import com.snow.common.core.domain.AjaxResult;
 import com.snow.common.core.page.TableDataInfo;
 import com.snow.common.enums.BusinessType;
 import com.snow.framework.config.ServerConfig;
-import com.snow.web.controller.business.support.MediaUrlResolver;
+import com.snow.framework.web.service.OssUploadService;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,8 @@ public class NhHeritageController extends BaseController
     private INhHeritageService nhHeritageService;
     @Autowired
     private ServerConfig serverConfig;
+    @Autowired
+    private OssUploadService ossUploadService;
 
     /**
      * Query heritage list with pagination.
@@ -56,8 +58,8 @@ public class NhHeritageController extends BaseController
                 if (row instanceof NhHeritage)
                 {
                     NhHeritage item = (NhHeritage) row;
-                    item.setCoverImage(MediaUrlResolver.resolve(baseUrl, item.getCoverImage()));
-                    item.setImagesJson(MediaUrlResolver.resolveJsonArrayText(baseUrl, item.getImagesJson()));
+                    item.setCoverImage(ossUploadService.resolveForApi(baseUrl, item.getCoverImage()));
+                    item.setImagesJson(ossUploadService.resolveJsonArrayText(baseUrl, item.getImagesJson()));
                 }
             }
         }
@@ -151,7 +153,7 @@ public class NhHeritageController extends BaseController
         detail.put("imagesJson", parseImages(baseUrl, data.getImagesJson()));
         detail.put("status", data.getStatus());
         detail.put("remark", data.getRemark());
-        detail.put("coverImage", MediaUrlResolver.resolve(baseUrl, data.getCoverImage()));
+        detail.put("coverImage", ossUploadService.resolveForApi(baseUrl, data.getCoverImage()));
         detail.put("createBy", data.getCreateBy());
         detail.put("createTime", data.getCreateTime());
         detail.put("updateBy", data.getUpdateBy());
@@ -165,7 +167,7 @@ public class NhHeritageController extends BaseController
         {
             return new JSONArray();
         }
-        return MediaUrlResolver.resolveJsonArray(baseUrl, JSON.parseArray(imagesJson));
+        return ossUploadService.resolveJsonArray(baseUrl, JSON.parseArray(imagesJson));
     }
 
     public static class HeritageSaveReq

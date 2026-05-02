@@ -26,4 +26,6 @@ public interface IOrderService
     public List<OrderInfo> selectManageOrderList(OrderInfo query);
 
     public int cancelTimeoutOrders(int timeoutMinutes, int limit);
+
+    public Map<String, Object> selectManageOrderStats(int days);
 }

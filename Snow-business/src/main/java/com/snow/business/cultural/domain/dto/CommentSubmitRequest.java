@@ -11,7 +11,7 @@ public class CommentSubmitRequest
     private String content;
     /** 0 否 1 是 */
     private String isAnonymous = "0";
-    /** 相对路径列表，如 /profile/upload/...（与通用上传返回 fileName 一致） */
+    /** 图片地址列表：OSS 为完整 https URL，本地为 /profile/upload/...（与通用上传返回 fileName 一致） */
     private List<String> imagePaths;
 
     public Integer getScore()

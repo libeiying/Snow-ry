@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.snow.business.northeast.mapper.NortheastAttractionMapper">
+
+    <resultMap id="NortheastAttractionResult" type="com.snow.business.northeast.domain.NortheastAttraction">
+        <id property="id" column="id"/>
+        <result property="code" column="code"/>
+        <result property="name" column="name"/>
+        <result property="alias" column="alias"/>
+        <result property="province" column="province"/>
+        <result property="city" column="city"/>
+        <result property="district" column="district"/>
+        <result property="address" column="address"/>
+        <result property="latitude" column="latitude"/>
+        <result property="longitude" column="longitude"/>
+        <result property="level" column="level"/>
+        <result property="themeTags" column="theme_tags"/>
+        <result property="seasonTags" column="season_tags"/>
+        <result property="bestMonths" column="best_months"/>
+        <result property="openHours" column="open_hours"/>
+        <result property="durationHours" column="duration_hours"/>
+        <result property="ticketPrice" column="ticket_price"/>
+        <result property="transportation" column="transportation"/>
+        <result property="crowdLevel" column="crowd_level"/>
+        <result property="suitableFor" column="suitable_for"/>
+        <result property="summary" column="summary"/>
+        <result property="highlights" column="highlights"/>
+        <result property="travelTips" column="travel_tips"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="status" column="status"/>
+        <result property="source" column="source"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <sql id="selectNortheastAttractionVo">
+        select id, code, name, alias, province, city, district, address, latitude, longitude,
+               level, theme_tags, season_tags, best_months, open_hours, duration_hours, ticket_price,
+               transportation, crowd_level, suitable_for, summary, highlights, travel_tips, image_url,
+               status, source, create_time, update_time
+          from northeast_attraction
+    </sql>
+
+    <select id="selectNortheastAttractionById" resultMap="NortheastAttractionResult">
+        <include refid="selectNortheastAttractionVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectNortheastAttractionList" resultMap="NortheastAttractionResult">
+        <include refid="selectNortheastAttractionVo"/>
+        <where>
+            <if test="code != null and code != ''">and code like concat('%', #{code}, '%')</if>
+            <if test="name != null and name != ''">and name like concat('%', #{name}, '%')</if>
+            <if test="province != null and province != ''">and province = #{province}</if>
+            <if test="city != null and city != ''">and city like concat('%', #{city}, '%')</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by update_time desc
+    </select>
+
+    <insert id="insertNortheastAttraction" parameterType="com.snow.business.northeast.domain.NortheastAttraction" useGeneratedKeys="true" keyProperty="id">
+        insert into northeast_attraction (code, name, alias, province, city, district, address, latitude, longitude,
+        level, theme_tags, season_tags, best_months, open_hours, duration_hours, ticket_price, transportation, crowd_level,
+        suitable_for, summary, highlights, travel_tips, image_url, status, source)
+        values (#{code}, #{name}, #{alias}, #{province}, #{city}, #{district}, #{address}, #{latitude}, #{longitude},
+        #{level}, #{themeTags}, #{seasonTags}, #{bestMonths}, #{openHours}, #{durationHours}, #{ticketPrice}, #{transportation}, #{crowdLevel},
+        #{suitableFor}, #{summary}, #{highlights}, #{travelTips}, #{imageUrl}, #{status}, #{source})
+    </insert>
+
+    <update id="updateNortheastAttraction" parameterType="com.snow.business.northeast.domain.NortheastAttraction">
+        update northeast_attraction
+        <set>
+            <if test="code != null">code = #{code},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="alias != null">alias = #{alias},</if>
+            <if test="province != null">province = #{province},</if>
+            <if test="city != null">city = #{city},</if>
+            <if test="district != null">district = #{district},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="level != null">level = #{level},</if>
+            <if test="themeTags != null">theme_tags = #{themeTags},</if>
+            <if test="seasonTags != null">season_tags = #{seasonTags},</if>
+            <if test="bestMonths != null">best_months = #{bestMonths},</if>
+            <if test="openHours != null">open_hours = #{openHours},</if>
+            <if test="durationHours != null">duration_hours = #{durationHours},</if>
+            <if test="ticketPrice != null">ticket_price = #{ticketPrice},</if>
+            <if test="transportation != null">transportation = #{transportation},</if>
+            <if test="crowdLevel != null">crowd_level = #{crowdLevel},</if>
+            <if test="suitableFor != null">suitable_for = #{suitableFor},</if>
+            <if test="summary != null">summary = #{summary},</if>
+            <if test="highlights != null">highlights = #{highlights},</if>
+            <if test="travelTips != null">travel_tips = #{travelTips},</if>
+            <if test="imageUrl != null">image_url = #{imageUrl},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="source != null">source = #{source},</if>
+            update_time = sysdate()
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteNortheastAttractionById">delete from northeast_attraction where id = #{id}</delete>
+    <delete id="deleteNortheastAttractionByIds">
+        delete from northeast_attraction where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">#{id}</foreach>
+    </delete>
+</mapper>

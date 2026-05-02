@@ -1,6 +1,8 @@
 package com.snow.business.order.mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.annotations.Param;
 import com.snow.business.order.domain.OrderInfo;
 
@@ -25,4 +27,20 @@ public interface OrderInfoMapper
                                  @Param("payStatus") String payStatus);
 
     public int cancelTimeoutOrders(@Param("timeoutMinutes") int timeoutMinutes, @Param("limit") int limit);
+
+    public Long countAllOrders();
+
+    public Long countTodayOrders();
+
+    public Long countByOrderStatus(@Param("orderStatus") String orderStatus);
+
+    public Long countByPayStatus(@Param("payStatus") String payStatus);
+
+    public BigDecimal sumPayAmountByPayStatus(@Param("payStatus") String payStatus);
+
+    public List<Map<String, Object>> selectDailyOrderTrend(@Param("days") int days);
+
+    public List<Map<String, Object>> selectOrderStatusDistribution();
+
+    public List<Map<String, Object>> selectPayChannelDistribution();
 }

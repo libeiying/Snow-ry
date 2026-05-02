@@ -15,17 +15,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="transactionNo"   column="transaction_no"   />
         <result property="callbackPayload" column="callback_payload" />
         <result property="failReason"      column="fail_reason"      />
+        <result property="paidTime"        column="paid_time"        />
         <result property="createTime"      column="create_time"      />
         <result property="updateTime"      column="update_time"      />
     </resultMap>
 
     <select id="selectLatestByOrderNo" resultMap="OrderPaymentResult">
         select id, payment_no, order_no, user_id, amount, pay_channel, pay_status, transaction_no,
-               callback_payload, fail_reason, create_time, update_time
+               callback_payload, fail_reason, paid_time, create_time, update_time
           from order_payment
          where order_no = #{orderNo}
          order by id desc
          limit 1
+    </select>
+
+    <select id="selectPaymentListByOrderNo" resultMap="OrderPaymentResult">
+        select id, payment_no, order_no, user_id, amount, pay_channel, pay_status, transaction_no,
+               callback_payload, fail_reason, paid_time, create_time, update_time
+          from order_payment
+         where order_no = #{orderNo}
+         order by id desc
     </select>
 
     <insert id="insertOrderPayment" parameterType="com.snow.business.order.domain.OrderPayment" useGeneratedKeys="true" keyProperty="id">
